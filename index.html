@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>瑤光代購 | 日本代購代訂商店</title>
+    <meta name="description" content="瑤光代購提供日本代購、代訂票、代訂位、網拍網購與日本郵局運費試算。" />
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-request-type="代訂位">
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="瑤光代購首頁">
+        <span class="brand-mark">瑤</span>
+        <span>瑤光代購</span>
+      </a>
+      <nav class="nav-links" aria-label="主要導覽">
+        <a href="#products">商品</a>
+        <a href="#special">代訂</a>
+        <a href="#shipping">運費</a>
+        <a href="#cart">購物車</a>
+        <a href="#lookup">查詢</a>
+        <a href="#faq">FAQ</a>
+        <a href="#admin-login">後台</a>
+      </nav>
+      <a class="line-button" href="https://lin.ee/NxJLmwO" target="_blank" rel="noreferrer">LINE</a>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-media" aria-hidden="true"></div>
+        <div class="hero-content">
+          <p class="eyebrow">日本代購・代訂票・代訂位・網拍網購</p>
+          <h1>瑤光代購</h1>
+          <p class="hero-copy">像夜空裡替你指路的星，幫你把日本商品、訂位、票券與網購需求整理到能下單。</p>
+          <div class="hero-actions">
+            <a class="primary-button" href="#products">看商品分類</a>
+            <a class="secondary-button" href="#special">填代訂需求</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="service-strip">
+        <div><strong>分類選購</strong><span>先選分類，再進入商品清單</span></div>
+        <div><strong>自動估價</strong><span>重量、國際運費、服務費一次算</span></div>
+        <div><strong>LINE 送出</strong><span>報價單編號與內容一鍵帶入</span></div>
+      </section>
+
+      <section class="section" id="products">
+        <div class="section-heading">
+          <p class="eyebrow">Products</p>
+          <h2>商品分類</h2>
+          <p>請先選擇分類，進去後會看到該分類裡可選購的商品。</p>
+        </div>
+
+        <div class="category-grid" id="categoryGrid" aria-live="polite"></div>
+
+        <div class="category-view" id="categoryView" hidden>
+          <div class="category-toolbar">
+            <button class="secondary-button" id="backToCategories" type="button">返回分類</button>
+            <div>
+              <p class="eyebrow">Category</p>
+              <h2 id="categoryTitle">商品清單</h2>
+            </div>
+          </div>
+          <div class="product-tools">
+            <input id="productSearch" type="search" placeholder="搜尋商品名稱或說明" />
+            <select id="productSort">
+              <option value="default">預設排序</option>
+              <option value="priceAsc">價格由低到高</option>
+              <option value="priceDesc">價格由高到低</option>
+              <option value="weightAsc">重量由輕到重</option>
+              <option value="status">依商品狀態</option>
+            </select>
+          </div>
+          <div class="product-grid" id="productGrid" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section class="section services" id="special">
+        <div class="section-heading">
+          <p class="eyebrow">Request</p>
+          <h2>代訂位、代訂票與特殊商品詢問</h2>
+          <p>選擇需求類型後，表單會顯示適合欄位。客人可以填店家、網址、日期、時間、人數與預算。</p>
+        </div>
+
+        <div class="service-grid">
+          <article class="service-card">
+            <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=80" alt="餐廳訂位" />
+            <div><h3>代訂位</h3><p>餐廳、咖啡廳、體驗活動，填店家、日期、時間與人數。</p></div>
+          </article>
+          <article class="service-card">
+            <img src="https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=900&q=80" alt="活動票券" />
+            <div><h3>代訂票</h3><p>演唱會、展覽、交通票券、活動入場券。</p></div>
+          </article>
+          <article class="service-card">
+            <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80" alt="網拍網購" />
+            <div><h3>特殊商品</h3><p>網拍、網購、二手平台、指定網站商品代下單。</p></div>
+          </article>
+        </div>
+
+        <form class="request-form special-form" id="specialForm">
+          <label>需求類型<select id="specialType" required><option value="代訂位">代訂位</option><option value="代訂票">代訂票</option><option value="特殊商品代購">特殊商品代購</option><option value="網拍網購">網拍網購</option></select></label>
+          <label>姓名<input id="specialName" type="text" placeholder="王小明" required /></label>
+          <label>聯絡方式<input id="specialContact" type="text" placeholder="LINE ID / IG / Email" required /></label>
+          <label class="reservation-field">店家或場所名稱<input id="venueName" type="text" placeholder="例：某某餐廳 / 某某咖啡廳" /></label>
+          <label class="ticket-field product-field">活動或商品名稱<input id="requestName" type="text" placeholder="例：演唱會名稱 / 商品名稱" /></label>
+          <label>網址<input id="specialLink" type="url" placeholder="https://example.com" /></label>
+          <label>日期<input id="specialDate" type="date" /></label>
+          <label class="reservation-field ticket-field">時間<input id="specialTime" type="time" /></label>
+          <label class="reservation-field">人數<input id="peopleCount" type="number" min="1" step="1" placeholder="2" /></label>
+          <label class="ticket-field product-field">數量<input id="itemQuantity" type="number" min="1" step="1" placeholder="1" /></label>
+          <label>預算<input id="specialBudget" type="text" placeholder="例：NT$3,000 內" /></label>
+          <label class="full">需求內容<textarea id="specialDetails" rows="5" placeholder="請填寫座位偏好、尺寸、顏色、票種、注意事項或其他需求" required></textarea></label>
+          <button class="primary-button form-submit" type="submit">產生詢問內容</button>
+        </form>
+      </section>
+
+      <section class="section shipping-section" id="shipping">
+        <div class="section-heading">
+          <p class="eyebrow">Shipping & Fee</p>
+          <h2>日本郵局運費與代購費試算</h2>
+          <p>目前內建日本寄台灣的 EMS 與小形包裝物航空費率。實際出貨仍以日本郵局現場與包裝後重量為準。</p>
+        </div>
+
+        <div class="calculator-layout">
+          <form class="request-form shipping-form" id="shippingForm">
+            <label>寄送方式<select id="shippingMethod"><option value="ems">EMS 國際快捷</option><option value="smallPacketAir">小形包裝物 航空</option></select></label>
+            <label>包裝後重量 g<input id="shippingWeight" type="number" min="1" max="30000" step="1" value="500" /></label>
+            <label>商品日幣金額<input id="itemYen" type="number" min="0" step="1" value="5000" /></label>
+            <label>匯率 JPY → TWD<input id="yenRate" type="number" min="0" step="0.001" value="0.22" /></label>
+            <label>日本國內運費 日幣<input id="domesticYen" type="number" min="0" step="1" value="0" /></label>
+            <label hidden>代購服務費 %<input id="servicePercent" type="number" min="0" step="1" value="10" /></label>
+            <label hidden>最低服務費 台幣<input id="minimumFee" type="number" min="0" step="1" value="100" /></label>
+            <label>其他費用 台幣<input id="extraFee" type="number" min="0" step="1" value="0" /></label>
+            <button class="primary-button form-submit" type="submit">產生運費報價</button>
+          </form>
+          <div class="shipping-result">
+            <div class="result-row"><span>日本郵局國際運費</span><strong id="shippingYen">¥0</strong></div>
+            <div class="result-row"><span>商品 + 日本國內運費</span><strong id="itemTwd">NT$0</strong></div>
+            <div class="result-row"><span>代購服務費</span><strong id="serviceFeeTwd">NT$0</strong></div>
+            <div class="result-row total"><span>預估總額</span><strong id="estimateTotal">NT$0</strong></div>
+            <p id="shippingNote">請輸入重量後試算。</p>
+            <div class="source-links">
+              <a href="https://www.post.japanpost.jp/send/oversea/charge/list-ems/all.html" target="_blank" rel="noreferrer">日本郵局 EMS 費率表</a>
+              <a href="https://www.post.japanpost.jp/int/2023fee_revision_kokusai/pdf/charge04.pdf" target="_blank" rel="noreferrer">日本郵局小形包裝物費率表</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section cart-section" id="cart">
+        <div class="section-heading">
+          <p class="eyebrow">Cart</p>
+          <h2>購物車與付款</h2>
+          <p>固定商品會自動加總重量並套用運費設定，送出後會產生報價單編號與 LINE 訊息。</p>
+        </div>
+        <div class="checkout-layout">
+          <div class="cart-panel">
+            <div id="cartItems" class="cart-items"></div>
+            <div class="cart-estimate">
+              <div><span>商品重量</span><strong id="cartWeight">0g</strong></div>
+              <div><span>商品小計</span><strong id="cartSubtotal">NT$0</strong></div>
+              <div><span>預估國際運費</span><strong id="cartShipping">NT$0</strong></div>
+              <div><span>代購服務費</span><strong id="cartServiceFee">NT$0</strong></div>
+            </div>
+            <div class="cart-total"><span>預估合計</span><strong id="cartTotal">NT$0</strong></div>
+          </div>
+          <form class="request-form checkout-form" id="checkoutForm">
+            <label>姓名<input id="orderName" type="text" placeholder="王小明" required /></label>
+            <label>聯絡方式<input id="orderContact" type="text" placeholder="LINE ID / IG / Email" required /></label>
+            <label>付款方式<select id="paymentMethod" required><option value="銀行轉帳">銀行轉帳</option><option value="LINE Pay">LINE Pay</option><option value="到店付款">到店付款</option></select></label>
+            <label>取貨方式<select id="deliveryMethod" required><option value="宅配">宅配</option><option value="超商取貨">超商取貨</option><option value="面交">面交</option></select></label>
+            <label class="full">備註<textarea id="orderNote" rows="4" placeholder="地址、希望到貨時間或其他備註"></textarea></label>
+            <button class="primary-button form-submit" type="submit">建立訂單報價</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="summary-panel" id="summaryPanel" hidden>
+        <div><p class="eyebrow">Message</p><h2>可傳給客服的內容</h2></div>
+        <textarea id="summaryText" rows="10" readonly></textarea>
+        <div class="summary-actions">
+          <button class="secondary-button" id="copyButton" type="button">複製內容</button>
+          <a class="secondary-button" id="emailNotifyButton" href="#" target="_blank" rel="noreferrer">寄 Email 通知</a>
+          <a class="line-button" id="summaryLineButton" href="https://lin.ee/NxJLmwO" target="_blank" rel="noreferrer">用 LINE 送出</a>
+        </div>
+      </section>
+
+      <section class="section lookup-section" id="lookup">
+        <div class="section-heading">
+          <p class="eyebrow">Order Lookup</p>
+          <h2>客人訂單查詢</h2>
+          <p>輸入報價編號即可查詢目前狀態。靜態版會查詢這個網站目前儲存的詢問紀錄。</p>
+        </div>
+        <form class="request-form lookup-form" id="lookupForm">
+          <label class="full">報價編號<input id="lookupQuoteId" type="text" placeholder="例：YG-20260605-001" required /></label>
+          <button class="primary-button form-submit" type="submit">查詢狀態</button>
+        </form>
+        <div class="lookup-result" id="lookupResult" hidden></div>
+      </section>
+
+      <section class="section faq-section" id="faq">
+        <div class="section-heading"><p class="eyebrow">FAQ</p><h2>常見問題與注意事項</h2><p>讓客人在詢問前先知道代購費、運費、關稅與取消規則。</p></div>
+        <div class="faq-grid">
+          <details open><summary>代購費怎麼算？</summary><p>一般商品固定加價：~500円 +30元、501~1000円 +50元、1001~2000円 +80元、2001~3000円 +120元、3001~5000円 +180元、5001~10000円 +300元；10000円以上另行報價。</p></details>
+          <details><summary>代抽選、代購票、代訂位怎麼算？</summary><p>代抽選/代搶成功依商品價格另外計算，失敗只收 NT$50/次。一般票券 +NT$200 起，熱門活動/演唱會 +NT$500 起。日本餐廳/活動代訂位固定服務費 NT$150/次，訂位失敗不收費。</p></details>
+          <details><summary>運費是固定的嗎？</summary><p>不是。網站會依商品重量先用日本郵局 EMS 或小形包裝物航空試算，實際仍以包裝後重量與郵局收費為準。</p></details>
+          <details><summary>會不會產生關稅？</summary><p>高單價、多件或特殊品項可能產生進口稅費，實際以海關判定為準。</p></details>
+          <details><summary>代訂票或訂位一定成功嗎？</summary><p>無法保證。票券、餐廳與活動名額會受平台規則、庫存、時間與店家回覆影響。</p></details>
+          <details><summary>下單後可以取消嗎？</summary><p>尚未代下單前可討論取消；已付款、已代下單、已訂位或票券成立後，需依店家或平台規則處理。</p></details>
+          <details><summary>哪些商品不能代購？</summary><p>違禁品、危險物品、航空禁運品、需要特殊許可的商品，會視情況婉拒接單。</p></details>
+        </div>
+      </section>
+
+      <section class="section admin-login-section" id="admin-login">
+        <div class="section-heading">
+          <p class="eyebrow">Admin Login</p>
+          <h2>後台登入</h2>
+          <p>請輸入管理密碼後再進入商品、收費與詢問紀錄管理。</p>
+        </div>
+        <form class="request-form admin-login-form" id="adminLoginForm">
+          <label class="full">管理密碼<input id="adminPassword" type="password" placeholder="請輸入密碼" required /></label>
+          <button class="primary-button form-submit" type="submit">進入後台</button>
+          <p class="full login-hint" id="adminLoginMessage"></p>
+        </form>
+      </section>
+
+      <section class="section admin-section" id="admin" hidden>
+        <div class="section-heading">
+          <p class="eyebrow">Admin</p>
+          <h2>簡易後台管理</h2>
+          <p>可新增、編輯、刪除商品，調整收費設定，並匯出詢問紀錄。</p>
+        </div>
+
+        <div class="admin-grid">
+          <form class="request-form settings-form" id="settingsForm">
+            <label>預設寄送方式<select id="settingShippingMethod"><option value="ems">EMS 國際快捷</option><option value="smallPacketAir">小形包裝物 航空</option></select></label>
+            <label>匯率 JPY → TWD<input id="settingYenRate" type="number" min="0" step="0.001" value="0.22" /></label>
+            <label hidden>代購服務費 %<input id="settingServicePercent" type="number" min="0" step="1" value="10" /></label>
+            <label hidden>最低服務費 台幣<input id="settingMinimumFee" type="number" min="0" step="1" value="100" /></label>
+            <label>其他費用 台幣<input id="settingExtraFee" type="number" min="0" step="1" value="0" /></label>
+            <label class="full">通知 Email<input id="settingNotifyEmail" type="email" placeholder="you@example.com" /></label>
+            <label class="full">Google Sheet Web App URL<input id="settingSheetUrl" type="url" placeholder="https://script.google.com/macros/s/..." /></label>
+            <button class="primary-button form-submit" type="submit">儲存收費設定</button>
+          </form>
+
+          <form class="request-form admin-form" id="adminForm">
+            <input id="editingProductId" type="hidden" />
+            <label>商品名稱<input id="adminName" type="text" placeholder="例：限定零食組" required /></label>
+            <label>分類<select id="adminCategory" required><option value="beauty">美妝保養</option><option value="snack">零食伴手禮</option><option value="fashion">服飾配件</option><option value="home">生活雜貨</option></select></label>
+            <label>價格 台幣<input id="adminPrice" type="number" min="1" step="1" placeholder="680" required /></label>
+            <label>重量 g<input id="adminWeight" type="number" min="1" step="1" placeholder="300" required /></label>
+            <label>商品狀態<select id="adminStatus"><option value="現貨">現貨</option><option value="預購">預購</option><option value="需詢價">需詢價</option><option value="售完">售完</option></select></label>
+            <label>圖片網址<input id="adminImage" type="url" placeholder="https://..." /></label>
+            <label class="full">商品說明<textarea id="adminDescription" rows="4" placeholder="商品特色、規格、注意事項" required></textarea></label>
+            <button class="primary-button form-submit" id="saveProductButton" type="submit">新增到分類商品</button>
+            <button class="secondary-button form-submit" id="cancelEditProduct" type="button" hidden>取消編輯</button>
+            <button class="secondary-button form-submit" id="resetProducts" type="button">恢復預設商品</button>
+          </form>
+        </div>
+
+        <div class="products-panel">
+          <div class="orders-heading">
+            <div><p class="eyebrow">Catalog</p><h2>商品管理</h2></div>
+            <button class="secondary-button" id="adminLogout" type="button">登出後台</button>
+          </div>
+          <div class="admin-product-list" id="adminProductList"></div>
+        </div>
+
+        <div class="orders-panel">
+          <div class="orders-heading">
+            <div><p class="eyebrow">Orders</p><h2>詢問紀錄</h2></div>
+            <div class="panel-actions">
+              <button class="secondary-button" id="exportOrders" type="button">匯出 CSV</button>
+              <button class="secondary-button" id="clearOrders" type="button">清空紀錄</button>
+            </div>
+          </div>
+          <div class="order-list" id="orderList"></div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="mobile-tabbar" aria-label="手機快速操作">
+      <a href="#products">商品</a>
+      <a href="#special">詢問</a>
+      <a href="#cart">購物車</a>
+      <a href="https://lin.ee/NxJLmwO" target="_blank" rel="noreferrer">LINE</a>
+    </nav>
+
+    <a class="floating-line" href="https://lin.ee/NxJLmwO" target="_blank" rel="noreferrer" aria-label="用 LINE 聯絡">LINE</a>
+
+    <footer class="site-footer">
+      <span>瑤光代購</span>
+      <span>IG @alkaidbuy・alkaidbuy@gmail.com</span>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
