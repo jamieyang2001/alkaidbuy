@@ -166,6 +166,22 @@ h1 { margin: 0; font-size: clamp(3rem, 8vw, 6.8rem); line-height: 0.94; }
 .category-card h3, .product-body h3, .service-card h3 { margin-block: 0 8px; font-size: 1.24rem; line-height: 1.25; }
 .category-card p, .product-body p, .service-card p { margin-block: 0; color: var(--muted); }
 .category-card strong { color: var(--green-dark); }
+.product-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.product-actions .cart-button { margin-top: 0; }
+.source-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid var(--green);
+  border-radius: 6px;
+  color: var(--green-dark);
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+}
+.source-link:hover { background: var(--paper); }
 .category-toolbar { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 22px; }
 .category-view[hidden], .category-grid[hidden] { display: none; }
 
@@ -341,6 +357,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--green); box-shad
   .hero { min-height: 620px; padding: 68px 20px 112px; }
   .section, .summary-panel, .service-strip { width: calc(100% - 24px); }
   .cart-row, .admin-product-card { grid-template-columns: 1fr; }
+  .product-actions { grid-template-columns: 1fr; }
   .cart-controls { justify-content: flex-start; }
   .floating-line { display: none; }
   .mobile-tabbar {

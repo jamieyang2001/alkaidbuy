@@ -1,21 +1,30 @@
 const categories = [
-  { id: "beauty", label: "美妝保養", description: "藥妝、保養、防曬、面膜與清潔用品。", image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=900&q=80" },
-  { id: "snack", label: "零食伴手禮", description: "期間限定零食、糖果、餅乾與送禮組合。", image: "https://images.unsplash.com/photo-1621939514649-280e2ee25f60?auto=format&fit=crop&w=900&q=80" },
-  { id: "fashion", label: "服飾配件", description: "衣服、鞋款、包包、飾品與品牌配件。", image: "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=900&q=80" },
-  { id: "home", label: "生活雜貨", description: "文具、收納、家用品、小家電與日常選物。", image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?auto=format&fit=crop&w=900&q=80" },
+  { id: "matsukiyo", label: "松本清", description: "已排除藥品、液體、噴霧與易燃品的乾燥衛生用品。", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=900&q=80" },
+  { id: "muji", label: "無印良品", description: "適合國際寄送的文具、紙品與輕量生活用品。", image: "https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=900&q=80" },
+  { id: "loft", label: "LOFT", description: "日本熱門文具、限定筆記本與輕量雜貨。", image: "https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=900&q=80" },
 ];
 
 const defaultProducts = [
-  { id: "beauty-01", name: "日本藥妝保養組", category: "beauty", price: 980, weight: 600, status: "現貨", description: "面膜、防曬、洗顏與熱門保養品組合。", image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=900&q=80" },
-  { id: "beauty-02", name: "人氣防曬乳", category: "beauty", price: 520, weight: 180, status: "現貨", description: "日本夏季常備款，可備註指定品牌。", image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=900&q=80" },
-  { id: "beauty-03", name: "保濕面膜十入", category: "beauty", price: 450, weight: 350, status: "預購", description: "日常補水保養，適合大量補貨。", image: "https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?auto=format&fit=crop&w=900&q=80" },
-  { id: "snack-01", name: "期間限定零食箱", category: "snack", price: 1280, weight: 1200, status: "現貨", description: "餅乾、糖果、限定口味與伴手禮混搭。", image: "https://images.unsplash.com/photo-1621939514649-280e2ee25f60?auto=format&fit=crop&w=900&q=80" },
-  { id: "snack-02", name: "機場伴手禮組", category: "snack", price: 890, weight: 850, status: "預購", description: "適合送禮的熱門伴手禮組合。", image: "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=900&q=80" },
-  { id: "snack-03", name: "抹茶點心組", category: "snack", price: 720, weight: 500, status: "現貨", description: "抹茶餅乾、巧克力與茶點搭配。", image: "https://images.unsplash.com/photo-1549007994-cb92caebd54b?auto=format&fit=crop&w=900&q=80" },
-  { id: "fashion-01", name: "品牌服飾配件代購", category: "fashion", price: 1680, weight: 700, status: "需詢價", description: "包包、鞋款、飾品、衣服，可協助查庫存。", image: "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=900&q=80" },
-  { id: "fashion-02", name: "日系帆布包", category: "fashion", price: 690, weight: 420, status: "現貨", description: "簡約日常款，可備註顏色偏好。", image: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80" },
-  { id: "home-01", name: "生活雜貨選物組", category: "home", price: 760, weight: 900, status: "現貨", description: "文具、收納、家用品與日常小物。", image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?auto=format&fit=crop&w=900&q=80" },
-  { id: "home-02", name: "文具收納組", category: "home", price: 580, weight: 450, status: "現貨", description: "桌面收納、筆記本、貼紙與文具小物。", image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80" },
+  { id: "matsukiyo-01", name: "matsukiyo 天然純棉化妝棉 248枚", category: "matsukiyo", price: 62, weight: 180, status: "可代購", description: "官網參考價 283円。乾燥棉製品，適合國際寄送。", image: "https://images.unsplash.com/photo-1607006483225-48a7c2ef3e10?auto=format&fit=crop&w=900&q=80", sourceUrl: "https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4973560041287" },
+  { id: "matsukiyo-02", name: "matsukiyo 大尺寸純棉化妝棉 130枚", category: "matsukiyo", price: 72, weight: 180, status: "可代購", description: "官網參考價 327円。乾燥棉製品，適合國際寄送。", image: "https://images.unsplash.com/photo-1607006483225-48a7c2ef3e10?auto=format&fit=crop&w=900&q=80", sourceUrl: "https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4973202205060" },
+  { id: "matsukiyo-03", name: "うるふか化妝棉 100枚", category: "matsukiyo", price: 72, weight: 150, status: "可代購", description: "官網參考價 327円。100% 純棉乾燥用品。", image: "https://images.unsplash.com/photo-1607006483225-48a7c2ef3e10?auto=format&fit=crop&w=900&q=80", sourceUrl: "https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4973202301045" },
+  { id: "matsukiyo-04", name: "KOSE 壓縮面膜紙 14入", category: "matsukiyo", price: 97, weight: 80, status: "可代購", description: "官網參考價 440円。未含化妝水的乾燥面膜紙。", image: "https://images.unsplash.com/photo-1583947215259-38e31be8751f?auto=format&fit=crop&w=900&q=80", sourceUrl: "https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4971710189032" },
+  { id: "matsukiyo-05", name: "三次元口罩 小尺寸 30枚", category: "matsukiyo", price: 310, weight: 220, status: "可代購", description: "官網參考價 1,408円。非藥品、非液態衛生用品。", image: "https://images.unsplash.com/photo-1584634731339-252c581abfc5?auto=format&fit=crop&w=900&q=80", sourceUrl: "https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4987067325801" },
+  { id: "matsukiyo-06", name: "RETINOTIME 柔膚化妝棉 80枚", category: "matsukiyo", price: 73, weight: 120, status: "可代購", description: "官網參考價 330円。乾燥化妝棉，不含液體。", image: "https://images.unsplash.com/photo-1607006483225-48a7c2ef3e10?auto=format&fit=crop&w=900&q=80", sourceUrl: "https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4955814146719" },
+
+  { id: "muji-01", name: "無印良品 月計畫便利貼 13枚", category: "muji", price: 22, weight: 35, status: "需查庫存", description: "官網參考價 100円。紙製文具，價格與庫存以購買日為準。", image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80", sourceUrl: "https://www.muji.com/jp/ja/store/cmdty/detail/4550182603149" },
+  { id: "muji-02", name: "無印良品 A5 活頁筆記本本體", category: "muji", price: 64, weight: 170, status: "可代購", description: "官網參考價 290円。聚丙烯封面、20孔。", image: "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=900&q=80", sourceUrl: "https://www.muji.com/jp/ja/store/cmdty/detail/4550182913804" },
+  { id: "muji-03", name: "無印良品 雙面刻度尺 15cm", category: "muji", price: 33, weight: 30, status: "可代購", description: "官網參考價 150円。輕量文具，適合合併寄送。", image: "https://images.unsplash.com/photo-1517971129774-8a2b38fa128e?auto=format&fit=crop&w=900&q=80", sourceUrl: "https://www.muji.com/jp/ja/store/cmdty/detail/4547315916153" },
+  { id: "muji-04", name: "無印良品 A5 Wide 收藏活頁夾", category: "muji", price: 152, weight: 260, status: "可代購", description: "官網參考價 690円。20孔收藏活頁夾。", image: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=900&q=80", sourceUrl: "https://www.muji.com/jp/ja/store/cmdty/detail/4550583766696" },
+  { id: "muji-05", name: "無印良品 文庫本筆記本 144頁", category: "muji", price: 42, weight: 150, status: "可代購", description: "官網參考價 190円。紙製筆記本。", image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80", sourceUrl: "https://www.muji.com/jp/ja/store/cmdty/detail/4550182111262" },
+  { id: "muji-06", name: "無印良品 A5 月計畫筆記本", category: "muji", price: 22, weight: 100, status: "可代購", description: "官網參考價 100円。32頁月計畫格式。", image: "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=900&q=80", sourceUrl: "https://www.muji.com/jp/ja/store/search/cmdty/%E6%96%87%E5%85%B7" },
+
+  { id: "loft-01", name: "LOFT限定 Rollbahn 迷你口袋筆記本 夜景", category: "loft", price: 169, weight: 110, status: "可代購", description: "官網參考價 770円。LOFT限定紙製筆記本。", image: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=900&q=80", sourceUrl: "https://www.loft.co.jp/store/c/cst300024_s-sales/" },
+  { id: "loft-02", name: "Rollbahn 口袋筆記本 M 黑色", category: "loft", price: 157, weight: 180, status: "可代購", description: "官網參考價 715円。經典方格筆記本。", image: "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=900&q=80", sourceUrl: "https://www.loft.co.jp/store/c/cst300024/" },
+  { id: "loft-03", name: "Rollbahn 迷你口袋筆記本 藍色", category: "loft", price: 121, weight: 100, status: "可代購", description: "官網參考價 550円。輕量紙製文具。", image: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=900&q=80", sourceUrl: "https://www.loft.co.jp/store/c/cst300024/" },
+  { id: "loft-04", name: "ZEBRA Mildliner Brush 深藍色", category: "loft", price: 36, weight: 20, status: "可代購", description: "官網參考價 165円。水性顏料筆，少量合併寄送。", image: "https://images.unsplash.com/photo-1561214115-f2f134cc4912?auto=format&fit=crop&w=900&q=80", sourceUrl: "https://www.loft.co.jp/store/g/g4901681108107/" },
+  { id: "loft-05", name: "ZEBRA Mildliner 柔色螢光筆", category: "loft", price: 24, weight: 20, status: "可代購", description: "官網參考價 110円。顏色依官網庫存選擇。", image: "https://images.unsplash.com/photo-1561214115-f2f134cc4912?auto=format&fit=crop&w=900&q=80", sourceUrl: "https://www.loft.co.jp/store/goods/search.aspx?keyword=%E3%83%9E%E3%82%A4%E3%83%AB%E3%83%89%E3%83%A9%E3%82%A4%E3%83%8A%E3%83%BC&search=x" },
+  { id: "loft-06", name: "Campus × Rollbahn 迷你筆記本", category: "loft", price: 145, weight: 100, status: "可代購", description: "官網參考價 660円。聯名紙製筆記本，款式依庫存。", image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80", sourceUrl: "https://www.loft.co.jp/store/c/cst300024_s-price/" },
 ];
 
 const shippingRates = {
@@ -23,7 +32,7 @@ const shippingRates = {
   smallPacketAir: { label: "小形包裝物 航空", limit: 2000, rows: [[100,350],[200,450],[300,550],[400,650],[500,750],[600,850],[700,950],[800,1050],[900,1150],[1000,1250],[1100,1350],[1200,1450],[1300,1550],[1400,1650],[1500,1750],[1600,1850],[1700,1950],[1800,2050],[1900,2150],[2000,2250]] },
 };
 
-const productStorageKey = "yaoguang-products-v4";
+const productStorageKey = "yaoguang-products-v5";
 const orderStorageKey = "yaoguang-orders";
 const quoteSequenceKey = "yaoguang-quote-sequence";
 const feeSettingsKey = "yaoguang-fee-settings";
@@ -226,7 +235,10 @@ function renderProducts() {
         <h3>${product.name}</h3>
         <p>${product.description}</p>
         <div class="product-details"><span>${product.weight.toLocaleString("zh-TW")}g</span><strong class="price">${money(product.price)}</strong></div>
-        <button class="cart-button" type="button" data-id="${product.id}" ${product.status === "售完" ? "disabled" : ""}>${product.status === "售完" ? "已售完" : "加入購物車"}</button>
+        <div class="product-actions">
+          <button class="cart-button" type="button" data-id="${product.id}" ${product.status === "售完" ? "disabled" : ""}>${product.status === "售完" ? "已售完" : "加入購物車"}</button>
+          ${product.sourceUrl ? `<a class="source-link" href="${product.sourceUrl}" target="_blank" rel="noopener noreferrer">查看日本官網</a>` : ""}
+        </div>
       </div>
     </article>`).join("") : '<p class="empty-cart">這個分類目前沒有符合條件的商品。</p>';
 }
