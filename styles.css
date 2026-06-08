@@ -160,7 +160,7 @@ h1 { margin: 0; font-size: clamp(3rem, 8vw, 6.8rem); line-height: 0.94; }
 .category-card:hover { border-color: var(--green); box-shadow: var(--shadow); transform: translateY(-2px); }
 .category-card img, .product-card img, .service-card img { width: 100%; object-fit: cover; }
 .category-card img { height: 180px; }
-.product-card img { height: 210px; }
+.product-card img { height: 210px; padding: 12px; object-fit: contain; background: #fff; }
 .service-card img { height: 190px; }
 .category-card span, .category-card h3, .category-card p, .category-card strong { margin-inline: 18px; }
 .category-card h3, .product-body h3, .service-card h3 { margin-block: 0 8px; font-size: 1.24rem; line-height: 1.25; }
