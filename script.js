@@ -50,7 +50,7 @@ const shippingRates = {
   smallPacketAir: { label: "小形包裝物 航空", limit: 2000, rows: [[100,350],[200,450],[300,550],[400,650],[500,750],[600,850],[700,950],[800,1050],[900,1150],[1000,1250],[1100,1350],[1200,1450],[1300,1550],[1400,1650],[1500,1750],[1600,1850],[1700,1950],[1800,2050],[1900,2150],[2000,2250]] },
 };
 
-const productStorageKey = "yaoguang-products-v6";
+const productStorageKey = "yaoguang-products-v7";
 const orderStorageKey = "yaoguang-orders";
 const quoteSequenceKey = "yaoguang-quote-sequence";
 const feeSettingsKey = "yaoguang-fee-settings";
@@ -67,6 +67,7 @@ const fixedServiceTiers = [
   { max: 5000, fee: 180 },
   { max: 10000, fee: 300 },
 ];
+const fixedProductRate = 0.205;
 
 const $ = (id) => document.querySelector(id);
 const els = {
@@ -163,6 +164,26 @@ function fixedServiceFeeByYen(yenAmount) {
   return tier ? tier.fee : null;
 }
 
+function productOfficialYen(product) {
+  if (product.yenPrice) return Number(product.yenPrice);
+  const match = product.description.match(/([0-9,]+)円/);
+  if (match) return Number(match[1].replaceAll(",", ""));
+  return 0;
+}
+
+function productListedPrice(product) {
+  const yenAmount = productOfficialYen(product);
+  if (!yenAmount) return Number(product.price) || 0;
+  const fixedFee = fixedServiceFeeByYen(yenAmount);
+  if (fixedFee === null) return null;
+  return Math.round(yenAmount * fixedProductRate) + fixedFee;
+}
+
+function productDisplayPrice(product) {
+  const price = productListedPrice(product);
+  return price === null ? "另行報價" : money(price);
+}
+
 function serviceFeeFromTwd(twdAmount, rate) {
   if (!twdAmount) return 0;
   const estimatedYen = rate ? Math.round(twdAmount / rate) : 0;
@@ -179,10 +200,9 @@ function cartEstimate() {
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shippingYen = weight ? shippingRate(settings.method, weight) : 0;
   const shippingTwd = shippingYen ? Math.round(shippingYen * settings.rate) : 0;
-  const fixedFee = subtotal ? serviceFeeFromTwd(subtotal, settings.rate) : 0;
-  const serviceFee = fixedFee || 0;
+  const serviceFee = 0;
   const outOfRange = weight > shippingRates[settings.method].limit || (weight > 0 && !shippingYen);
-  const quoteOnly = subtotal > 0 && fixedFee === null;
+  const quoteOnly = false;
   return { methodLabel: shippingRates[settings.method].label, weight, subtotal, shippingYen, shippingTwd, serviceFee, extra: subtotal ? settings.extra : 0, total: subtotal + shippingTwd + serviceFee + (subtotal ? settings.extra : 0), outOfRange, quoteOnly };
 }
 
@@ -239,8 +259,8 @@ function renderProducts() {
   const keyword = els.productSearch.value.trim().toLowerCase();
   if (keyword) list = list.filter((product) => `${product.name} ${product.description}`.toLowerCase().includes(keyword));
   const sort = els.productSort.value;
-  if (sort === "priceAsc") list.sort((a, b) => a.price - b.price);
-  if (sort === "priceDesc") list.sort((a, b) => b.price - a.price);
+  if (sort === "priceAsc") list.sort((a, b) => (productListedPrice(a) ?? Infinity) - (productListedPrice(b) ?? Infinity));
+  if (sort === "priceDesc") list.sort((a, b) => (productListedPrice(b) ?? 0) - (productListedPrice(a) ?? 0));
   if (sort === "weightAsc") list.sort((a, b) => a.weight - b.weight);
   if (sort === "status") list.sort((a, b) => a.status.localeCompare(b.status, "zh-Hant"));
 
@@ -252,7 +272,7 @@ function renderProducts() {
         <span class="status-pill" data-status="${product.status}">${product.status}</span>
         <h3>${product.name}</h3>
         <p>${product.description}</p>
-        <div class="product-details"><span>${product.weight.toLocaleString("zh-TW")}g</span><strong class="price">${money(product.price)}</strong></div>
+        <div class="product-details"><span>${productOfficialYen(product) ? `官網 ${yen(productOfficialYen(product))} / ${product.weight.toLocaleString("zh-TW")}g / 含代購費` : `${product.weight.toLocaleString("zh-TW")}g`}</span><strong class="price">${productDisplayPrice(product)}</strong></div>
         <div class="product-actions">
           <button class="cart-button" type="button" data-id="${product.id}" ${product.status === "售完" ? "disabled" : ""}>${product.status === "售完" ? "已售完" : "加入購物車"}</button>
           ${product.sourceUrl ? `<a class="source-link" href="${product.sourceUrl}" target="_blank" rel="noopener noreferrer">查看日本官網</a>` : ""}
@@ -276,7 +296,7 @@ function renderCart() {
   els.cartWeight.textContent = `${estimate.weight.toLocaleString("zh-TW")}g`;
   els.cartSubtotal.textContent = money(estimate.subtotal);
   els.cartShipping.textContent = estimate.outOfRange ? "需另詢" : money(estimate.shippingTwd);
-  els.cartServiceFee.textContent = estimate.quoteOnly ? "另行報價" : money(estimate.serviceFee);
+  els.cartServiceFee.textContent = cart.length ? "已含於商品價" : money(0);
   els.cartTotal.textContent = estimate.outOfRange || estimate.quoteOnly ? "需另詢" : money(estimate.total);
 }
 
@@ -284,7 +304,11 @@ function addToCart(id) {
   const product = products.find((item) => item.id === id);
   const existing = cart.find((item) => item.id === id);
   if (existing) existing.quantity += 1;
-  else if (product) cart.push({ ...product, quantity: 1 });
+  else if (product) {
+    const price = productListedPrice(product);
+    if (price === null) return showSummary(`${product.name} 金額超過固定加價級距，請改用 LINE 詢問報價。`);
+    cart.push({ ...product, price, yenPrice: productOfficialYen(product), quantity: 1 });
+  }
   renderCart();
 }
 
@@ -337,14 +361,14 @@ function calculateShipping(showMessage = false) {
 
 function buildCartMessage(formData, id) {
   const estimate = cartEstimate();
-  const lines = cart.map((item) => `- ${item.name} / ${money(item.price)} x ${item.quantity} / ${item.weight * item.quantity}g`);
-  return ["瑤光代購 固定商品報價單", `報價編號：${id}`, `姓名：${formData.name}`, `聯絡方式：${formData.contact}`, `付款方式：${formData.payment}`, `取貨方式：${formData.delivery}`, "商品：", ...lines, `商品小計：${money(estimate.subtotal)}`, `包裝後重量：${estimate.weight.toLocaleString("zh-TW")}g`, `寄送方式：${estimate.methodLabel}`, `預估國際運費：${estimate.outOfRange ? "需另詢" : `${yen(estimate.shippingYen)} / 約 ${money(estimate.shippingTwd)}`}`, `代購服務費：${money(estimate.serviceFee)}`, `其他費用：${money(estimate.extra)}`, `預估合計：${estimate.outOfRange ? "需另詢" : money(estimate.total)}`, `備註：${formData.note || "無"}`].join("\n");
+  const lines = cart.map((item) => `- ${item.name} / 官網${item.yenPrice ? yen(item.yenPrice) : "未填"} / 含代購價 ${money(item.price)} x ${item.quantity} / ${item.weight * item.quantity}g`);
+  return ["瑤光代購 固定商品報價單", `報價編號：${id}`, `姓名：${formData.name}`, `聯絡方式：${formData.contact}`, `付款方式：${formData.payment}`, `取貨方式：${formData.delivery}`, "商品：", ...lines, `商品小計：${money(estimate.subtotal)}`, `包裝後重量：${estimate.weight.toLocaleString("zh-TW")}g`, `寄送方式：${estimate.methodLabel}`, `預估國際運費：${estimate.outOfRange ? "需另詢" : `${yen(estimate.shippingYen)} / 約 ${money(estimate.shippingTwd)}`}`, "代購服務費：已含於商品價格", `其他費用：${money(estimate.extra)}`, `預估合計：${estimate.outOfRange ? "需另詢" : money(estimate.total)}`, `備註：${formData.note || "無"}`].join("\n");
 }
 
 function renderAdminProducts() {
   els.adminProductList.innerHTML = products.map((product) => `
     <article class="admin-product-card">
-      <div><strong>${product.name}</strong><span>${categoryLabel(product.category)}・${product.status}・${money(product.price)}・${product.weight}g</span></div>
+      <div><strong>${product.name}</strong><span>${categoryLabel(product.category)}・${product.status}・${productDisplayPrice(product)}・${product.weight}g</span></div>
       <div class="panel-actions">
         <button class="secondary-button" type="button" data-action="edit-product" data-id="${product.id}">編輯</button>
         <button class="secondary-button danger-button" type="button" data-action="delete-product" data-id="${product.id}">刪除</button>
@@ -592,7 +616,7 @@ els.copyButton.addEventListener("click", async () => {
   setTimeout(() => { els.copyButton.textContent = "複製內容"; }, 1200);
 });
 
-applyFeeSettings(load(feeSettingsKey, { method: "ems", rate: 0.22, percent: 10, minFee: 100, extra: 0, notifyEmail: contactEmail, sheetUrl: "" }));
+applyFeeSettings(load(feeSettingsKey, { method: "ems", rate: 0.205, percent: 10, minFee: 100, extra: 0, notifyEmail: contactEmail, sheetUrl: "" }));
 els.summaryLineButton.href = lineOfficialUrl;
 renderCategories();
 renderCart();

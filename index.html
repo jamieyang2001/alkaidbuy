@@ -128,7 +128,7 @@
             <label>寄送方式<select id="shippingMethod"><option value="ems">EMS 國際快捷</option><option value="smallPacketAir">小形包裝物 航空</option></select></label>
             <label>包裝後重量 g<input id="shippingWeight" type="number" min="1" max="30000" step="1" value="500" /></label>
             <label>商品日幣金額<input id="itemYen" type="number" min="0" step="1" value="5000" /></label>
-            <label>匯率 JPY → TWD<input id="yenRate" type="number" min="0" step="0.001" value="0.22" /></label>
+            <label>匯率 JPY → TWD<input id="yenRate" type="number" min="0" step="0.001" value="0.205" /></label>
             <label>日本國內運費 日幣<input id="domesticYen" type="number" min="0" step="1" value="0" /></label>
             <label hidden>代購服務費 %<input id="servicePercent" type="number" min="0" step="1" value="10" /></label>
             <label hidden>最低服務費 台幣<input id="minimumFee" type="number" min="0" step="1" value="100" /></label>
@@ -203,7 +203,7 @@
       <section class="section faq-section" id="faq">
         <div class="section-heading"><p class="eyebrow">FAQ</p><h2>常見問題與注意事項</h2><p>讓客人在詢問前先知道代購費、運費、關稅與取消規則。</p></div>
         <div class="faq-grid">
-          <details open><summary>代購費怎麼算？</summary><p>一般商品固定加價：~500円 +30元、501~1000円 +50元、1001~2000円 +80元、2001~3000円 +120元、3001~5000円 +180元、5001~10000円 +300元；10000円以上另行報價。</p></details>
+          <details open><summary>商品價格怎麼算？</summary><p>固定商品顯示價為：日本官網參考價 × 0.205，再依級距加上固定代購費。一般商品固定加價：~500円 +30元、501~1000円 +50元、1001~2000円 +80元、2001~3000円 +120元、3001~5000円 +180元、5001~10000円 +300元；10000円以上另行報價。</p></details>
           <details><summary>代抽選、代購票、代訂位怎麼算？</summary><p>代抽選/代搶成功依商品價格另外計算，失敗只收 NT$50/次。一般票券 +NT$200 起，熱門活動/演唱會 +NT$500 起。日本餐廳/活動代訂位固定服務費 NT$150/次，訂位失敗不收費。</p></details>
           <details><summary>運費是固定的嗎？</summary><p>不是。網站會依商品重量先用日本郵局 EMS 或小形包裝物航空試算，實際仍以包裝後重量與郵局收費為準。</p></details>
           <details><summary>會不會產生關稅？</summary><p>高單價、多件或特殊品項可能產生進口稅費，實際以海關判定為準。</p></details>
@@ -236,7 +236,7 @@
         <div class="admin-grid">
           <form class="request-form settings-form" id="settingsForm">
             <label>預設寄送方式<select id="settingShippingMethod"><option value="ems">EMS 國際快捷</option><option value="smallPacketAir">小形包裝物 航空</option></select></label>
-            <label>匯率 JPY → TWD<input id="settingYenRate" type="number" min="0" step="0.001" value="0.22" /></label>
+            <label>匯率 JPY → TWD<input id="settingYenRate" type="number" min="0" step="0.001" value="0.205" /></label>
             <label hidden>代購服務費 %<input id="settingServicePercent" type="number" min="0" step="1" value="10" /></label>
             <label hidden>最低服務費 台幣<input id="settingMinimumFee" type="number" min="0" step="1" value="100" /></label>
             <label>其他費用 台幣<input id="settingExtraFee" type="number" min="0" step="1" value="0" /></label>
