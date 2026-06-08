@@ -64,7 +64,8 @@
             </div>
           </div>
           <div class="product-tools">
-            <input id="productSearch" type="search" placeholder="搜尋商品名稱或說明" />
+            <input id="productSearch" type="search" placeholder="搜尋商品名稱、型號、容量或說明" />
+            <select id="productSubcategory"><option value="">全部細分類</option></select>
             <select id="productSort">
               <option value="default">預設排序</option>
               <option value="priceAsc">價格由低到高</option>
@@ -161,9 +162,14 @@
             <div class="cart-estimate">
               <div><span>商品重量</span><strong id="cartWeight">0g</strong></div>
               <div><span>商品小計</span><strong id="cartSubtotal">NT$0</strong></div>
+              <div><span>優惠折抵</span><strong id="cartDiscount">-NT$0</strong></div>
               <div><span>預估國際運費</span><strong id="cartShipping">NT$0</strong></div>
-              <div><span>代購服務費</span><strong id="cartServiceFee">NT$0</strong></div>
             </div>
+            <div class="coupon-entry">
+              <input id="couponCode" type="text" placeholder="輸入優惠券代碼" />
+              <button class="secondary-button" id="applyCoupon" type="button">套用</button>
+            </div>
+            <p class="coupon-message" id="couponMessage"></p>
             <div class="cart-total"><span>預估合計</span><strong id="cartTotal">NT$0</strong></div>
           </div>
           <form class="request-form checkout-form" id="checkoutForm">
@@ -248,15 +254,30 @@
           <form class="request-form admin-form" id="adminForm">
             <input id="editingProductId" type="hidden" />
             <label>商品名稱<input id="adminName" type="text" placeholder="例：限定零食組" required /></label>
-            <label>分類<select id="adminCategory" required><option value="beauty">美妝保養</option><option value="snack">零食伴手禮</option><option value="fashion">服飾配件</option><option value="home">生活雜貨</option></select></label>
-            <label>價格 台幣<input id="adminPrice" type="number" min="1" step="1" placeholder="680" required /></label>
+            <label>店家分類<select id="adminCategory" required><option value="matsukiyo">松本清</option><option value="muji">無印良品</option><option value="loft">LOFT</option></select></label>
+            <label>細分類<input id="adminSubcategory" type="text" placeholder="例：藥妝、美妝、零食" /></label>
+            <label>官網價格 日幣<input id="adminPrice" type="number" min="1" step="1" placeholder="680" required /></label>
             <label>重量 g<input id="adminWeight" type="number" min="1" step="1" placeholder="300" required /></label>
-            <label>商品狀態<select id="adminStatus"><option value="現貨">現貨</option><option value="預購">預購</option><option value="需詢價">需詢價</option><option value="售完">售完</option></select></label>
+            <label>型號／尺寸／容量<input id="adminSpec" type="text" placeholder="例：50mL、M、黑色" /></label>
+            <label>規格選項<input id="adminVariants" type="text" placeholder="例：黑色|白色|粉色" /></label>
+            <label>商品狀態<select id="adminStatus"><option value="可代購">可代購</option><option value="需確認寄送">需確認寄送</option><option value="需查庫存">需查庫存</option><option value="預購">預購</option><option value="需詢價">需詢價</option><option value="售完">售完</option></select></label>
             <label>圖片網址<input id="adminImage" type="url" placeholder="https://..." /></label>
             <label class="full">商品說明<textarea id="adminDescription" rows="4" placeholder="商品特色、規格、注意事項" required></textarea></label>
             <button class="primary-button form-submit" id="saveProductButton" type="submit">新增到分類商品</button>
             <button class="secondary-button form-submit" id="cancelEditProduct" type="button" hidden>取消編輯</button>
             <button class="secondary-button form-submit" id="resetProducts" type="button">恢復預設商品</button>
+          </form>
+
+          <form class="request-form coupon-form" id="couponForm">
+            <div class="full"><p class="eyebrow">Coupons</p><h2>優惠券設定</h2></div>
+            <label>優惠券代碼<input id="adminCouponCode" type="text" placeholder="WELCOME100" required /></label>
+            <label>折扣方式<select id="adminCouponType"><option value="fixed">固定折抵金額</option><option value="percent">百分比折扣</option></select></label>
+            <label>折扣數值<input id="adminCouponValue" type="number" min="1" step="1" placeholder="100" required /></label>
+            <label>最低商品金額<input id="adminCouponMinimum" type="number" min="0" step="1" value="0" /></label>
+            <label>到期日<input id="adminCouponExpiry" type="date" /></label>
+            <label><input id="adminCouponActive" type="checkbox" checked /> 啟用優惠券</label>
+            <button class="primary-button form-submit" type="submit">新增優惠券</button>
+            <div class="coupon-admin-list full" id="couponAdminList"></div>
           </form>
         </div>
 

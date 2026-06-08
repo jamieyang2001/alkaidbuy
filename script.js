@@ -30,6 +30,10 @@ const defaultProducts = [
   { id: "muji-11", name: "無印良品 中性筆替芯 0.3mm", category: "muji", price: 7, weight: 10, status: "可代購", description: "官網參考價 30円。顏色依官網庫存選擇。", image: "https://img.muji.net/img/item/4550344872659_1260.jpg", sourceUrl: "https://www.muji.com/jp/ja/store/cmdty/detail/4550344872659" },
   { id: "muji-12", name: "無印良品 中性筆替芯 0.5mm 黑", category: "muji", price: 7, weight: 10, status: "可代購", description: "官網參考價 30円。輕量文具，適合合併寄送。", image: "https://img.muji.net/img/item/4550002822873_1260.jpg", sourceUrl: "https://www.muji.com/jp/ja/store/cmdty/detail/4550002822873" },
   { id: "muji-13", name: "無印良品 中性筆替芯 0.5mm 綠", category: "muji", price: 7, weight: 10, status: "可代購", description: "官網參考價 30円。輕量文具，適合合併寄送。", image: "https://img.muji.net/img/item/4550002822927_1260.jpg", sourceUrl: "https://www.muji.com/jp/ja/store/cmdty/detail/4550002822927" },
+  { id: "muji-14", name: "無印良品 敏感肌用高保濕化妝水", category: "muji", subcategory: "化妝保養", yenPrice: 990, price: 990, weight: 360, spec: "300mL", variants: ["清爽型 300mL", "滋潤型 300mL", "高保濕 300mL"], status: "需確認寄送", description: "官網參考價 990円。液態化妝品，寄送方式與數量需確認。", image: "https://img.muji.net/img/item/4550583434991_1260.jpg", sourceUrl: "https://www.muji.com/jp/ja/store/cmdty/detail/4550583434991" },
+  { id: "muji-15", name: "無印良品 舒適複方精油", category: "muji", subcategory: "香氛香薰", yenPrice: 1790, price: 1790, weight: 60, spec: "10mL", variants: ["舒適複方 10mL", "花香複方 10mL"], status: "需確認寄送", description: "官網參考價 1,790円。精油屬液態香氛，寄送前需確認航空規定。", image: "https://img.muji.net/img/item/4550344294901_1260.jpg", sourceUrl: "https://www.muji.com/jp/ja/store/cmdty/detail/4550344294901" },
+  { id: "muji-16", name: "無印良品 佛手柑精油", category: "muji", subcategory: "香氛香薰", yenPrice: 1790, price: 1790, weight: 60, spec: "10mL", variants: ["10mL"], status: "需確認寄送", description: "官網參考價約 1,790円。精油屬液態香氛，寄送前需確認航空規定。", image: "https://img.muji.net/img/item/4550583991760_1260.jpg", sourceUrl: "https://www.muji.com/jp/ja/store/cmdty/detail/4550583991760" },
+  { id: "muji-17", name: "無印良品 不揃抹茶年輪蛋糕", category: "muji", subcategory: "零食", yenPrice: 180, price: 180, weight: 120, spec: "1個", variants: ["抹茶", "紅茶", "香蕉", "巧克力"], status: "可代購", description: "官網參考價 180円。食品寄送仍以台灣輸入規定及數量為準。", image: "https://img.muji.net/img/item/4550723634410_1260.jpg", sourceUrl: "https://www.muji.com/jp/ja/store/cmdty/detail/4550723634410" },
 
   { id: "loft-01", name: "LOFT 動物造型便條紙 日本犬", category: "loft", price: 109, weight: 70, status: "可代購", description: "官網參考價約 495円。紙製文具。", image: "https://www.loft.co.jp/shop_assets/img/goods/L/4515968539159-L.jpg", sourceUrl: "https://www.loft.co.jp/store/g/g4515968539159/" },
   { id: "loft-02", name: "LOFT 動物造型便條紙 柯基", category: "loft", price: 109, weight: 70, status: "可代購", description: "官網參考價約 495円。紙製文具。", image: "https://www.loft.co.jp/shop_assets/img/goods/L/4515968539166-L.jpg", sourceUrl: "https://www.loft.co.jp/store/g/g4515968539166/" },
@@ -50,10 +54,11 @@ const shippingRates = {
   smallPacketAir: { label: "小形包裝物 航空", limit: 2000, rows: [[100,350],[200,450],[300,550],[400,650],[500,750],[600,850],[700,950],[800,1050],[900,1150],[1000,1250],[1100,1350],[1200,1450],[1300,1550],[1400,1650],[1500,1750],[1600,1850],[1700,1950],[1800,2050],[1900,2150],[2000,2250]] },
 };
 
-const productStorageKey = "yaoguang-products-v7";
+const productStorageKey = "yaoguang-products-v8";
 const orderStorageKey = "yaoguang-orders";
 const quoteSequenceKey = "yaoguang-quote-sequence";
 const feeSettingsKey = "yaoguang-fee-settings";
+const couponStorageKey = "yaoguang-coupons";
 const adminAuthKey = "yaoguang-admin-auth";
 const adminPassword = "tophet1003";
 const lineOfficialUrl = "https://lin.ee/NxJLmwO";
@@ -72,14 +77,15 @@ const fixedProductRate = 0.205;
 const $ = (id) => document.querySelector(id);
 const els = {
   categoryGrid: $("#categoryGrid"), categoryView: $("#categoryView"), categoryTitle: $("#categoryTitle"), backToCategories: $("#backToCategories"),
-  productSearch: $("#productSearch"), productSort: $("#productSort"), productGrid: $("#productGrid"),
-  cartItems: $("#cartItems"), cartWeight: $("#cartWeight"), cartSubtotal: $("#cartSubtotal"), cartShipping: $("#cartShipping"), cartServiceFee: $("#cartServiceFee"), cartTotal: $("#cartTotal"),
+  productSearch: $("#productSearch"), productSubcategory: $("#productSubcategory"), productSort: $("#productSort"), productGrid: $("#productGrid"),
+  cartItems: $("#cartItems"), cartWeight: $("#cartWeight"), cartSubtotal: $("#cartSubtotal"), cartDiscount: $("#cartDiscount"), cartShipping: $("#cartShipping"), cartTotal: $("#cartTotal"), couponCode: $("#couponCode"), applyCoupon: $("#applyCoupon"), couponMessage: $("#couponMessage"),
   summaryPanel: $("#summaryPanel"), summaryText: $("#summaryText"), summaryLineButton: $("#summaryLineButton"), emailNotifyButton: $("#emailNotifyButton"), copyButton: $("#copyButton"),
   specialForm: $("#specialForm"), specialType: $("#specialType"), checkoutForm: $("#checkoutForm"), shippingForm: $("#shippingForm"),
   shippingMethod: $("#shippingMethod"), shippingWeight: $("#shippingWeight"), itemYen: $("#itemYen"), yenRate: $("#yenRate"), domesticYen: $("#domesticYen"), servicePercent: $("#servicePercent"), minimumFee: $("#minimumFee"), extraFee: $("#extraFee"),
   shippingYen: $("#shippingYen"), itemTwd: $("#itemTwd"), serviceFeeTwd: $("#serviceFeeTwd"), estimateTotal: $("#estimateTotal"), shippingNote: $("#shippingNote"),
   adminForm: $("#adminForm"), editingProductId: $("#editingProductId"), saveProductButton: $("#saveProductButton"), cancelEditProduct: $("#cancelEditProduct"), resetProducts: $("#resetProducts"),
-  adminName: $("#adminName"), adminCategory: $("#adminCategory"), adminPrice: $("#adminPrice"), adminWeight: $("#adminWeight"), adminStatus: $("#adminStatus"), adminImage: $("#adminImage"), adminDescription: $("#adminDescription"), adminProductList: $("#adminProductList"),
+  adminName: $("#adminName"), adminCategory: $("#adminCategory"), adminSubcategory: $("#adminSubcategory"), adminPrice: $("#adminPrice"), adminWeight: $("#adminWeight"), adminSpec: $("#adminSpec"), adminVariants: $("#adminVariants"), adminStatus: $("#adminStatus"), adminImage: $("#adminImage"), adminDescription: $("#adminDescription"), adminProductList: $("#adminProductList"),
+  couponForm: $("#couponForm"), adminCouponCode: $("#adminCouponCode"), adminCouponType: $("#adminCouponType"), adminCouponValue: $("#adminCouponValue"), adminCouponMinimum: $("#adminCouponMinimum"), adminCouponExpiry: $("#adminCouponExpiry"), adminCouponActive: $("#adminCouponActive"), couponAdminList: $("#couponAdminList"),
   settingsForm: $("#settingsForm"), settingShippingMethod: $("#settingShippingMethod"), settingYenRate: $("#settingYenRate"), settingServicePercent: $("#settingServicePercent"), settingMinimumFee: $("#settingMinimumFee"), settingExtraFee: $("#settingExtraFee"), settingNotifyEmail: $("#settingNotifyEmail"), settingSheetUrl: $("#settingSheetUrl"),
   orderList: $("#orderList"), exportOrders: $("#exportOrders"), clearOrders: $("#clearOrders"),
   adminLoginForm: $("#adminLoginForm"), adminPassword: $("#adminPassword"), adminLoginMessage: $("#adminLoginMessage"), adminSection: $("#admin"), adminLogout: $("#adminLogout"),
@@ -88,8 +94,10 @@ const els = {
 
 let products = load(productStorageKey, defaultProducts);
 let orders = load(orderStorageKey, []);
+let coupons = load(couponStorageKey, []);
 let cart = [];
 let activeCategory = null;
+let activeCoupon = null;
 
 function load(key, fallback) {
   const value = localStorage.getItem(key);
@@ -164,6 +172,43 @@ function fixedServiceFeeByYen(yenAmount) {
   return tier ? tier.fee : null;
 }
 
+function productSubcategory(product) {
+  if (product.subcategory) return product.subcategory;
+  const text = `${product.name} ${product.description}`;
+  if (product.category === "matsukiyo") {
+    if (/口罩/.test(text)) return "口罩衛生";
+    if (/化妝棉|面膜紙/.test(text)) return "美容工具";
+    return "藥妝美妝";
+  }
+  if (product.category === "muji") {
+    if (/筆|尺|橡皮擦|筆盒|筆記本|活頁|便利貼/.test(text)) return "文具";
+    if (/香|精油|擴香/.test(text)) return "香氛香薰";
+    if (/餅|糖|零食|蛋糕|巧克力/.test(text)) return "零食";
+    return "化妝保養";
+  }
+  if (/Rollbahn|筆記本/.test(text)) return "筆記本";
+  return "便條紙";
+}
+
+function productSpec(product) {
+  if (product.spec) return product.spec;
+  const match = product.name.match(/(\d+(?:\.\d+)?\s?(?:mL|ml|g|枚|入|mm|cm)|\b[MSL]\b)/i);
+  return match ? match[1] : "標準款";
+}
+
+function productVariants(product) {
+  if (Array.isArray(product.variants)) return product.variants;
+  if (typeof product.variants === "string") return product.variants.split("|").filter(Boolean);
+  return [productSpec(product)];
+}
+
+function couponDiscount(subtotal) {
+  if (!activeCoupon || !activeCoupon.active || subtotal < activeCoupon.minimum) return 0;
+  if (activeCoupon.expiry && new Date(`${activeCoupon.expiry}T23:59:59`) < new Date()) return 0;
+  const amount = activeCoupon.type === "percent" ? Math.round(subtotal * activeCoupon.value / 100) : activeCoupon.value;
+  return Math.min(subtotal, amount);
+}
+
 function productOfficialYen(product) {
   if (product.yenPrice) return Number(product.yenPrice);
   const match = product.description.match(/([0-9,]+)円/);
@@ -201,9 +246,10 @@ function cartEstimate() {
   const shippingYen = weight ? shippingRate(settings.method, weight) : 0;
   const shippingTwd = shippingYen ? Math.round(shippingYen * settings.rate) : 0;
   const serviceFee = 0;
+  const discount = couponDiscount(subtotal);
   const outOfRange = weight > shippingRates[settings.method].limit || (weight > 0 && !shippingYen);
   const quoteOnly = false;
-  return { methodLabel: shippingRates[settings.method].label, weight, subtotal, shippingYen, shippingTwd, serviceFee, extra: subtotal ? settings.extra : 0, total: subtotal + shippingTwd + serviceFee + (subtotal ? settings.extra : 0), outOfRange, quoteOnly };
+  return { methodLabel: shippingRates[settings.method].label, weight, subtotal, discount, shippingYen, shippingTwd, serviceFee, extra: subtotal ? settings.extra : 0, total: subtotal - discount + shippingTwd + serviceFee + (subtotal ? settings.extra : 0), outOfRange, quoteOnly };
 }
 
 function showSummary(message) {
@@ -250,6 +296,8 @@ function openCategory(id) {
   els.categoryGrid.hidden = true;
   els.categoryView.hidden = false;
   els.categoryTitle.textContent = `${categoryLabel(id)}商品清單`;
+  const subcategories = [...new Set(products.filter((product) => product.category === id).map(productSubcategory))];
+  els.productSubcategory.innerHTML = '<option value="">全部細分類</option>' + subcategories.map((item) => `<option value="${item}">${item}</option>`).join("");
   renderProducts();
   els.categoryView.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -257,7 +305,9 @@ function openCategory(id) {
 function renderProducts() {
   let list = products.filter((product) => product.category === activeCategory);
   const keyword = els.productSearch.value.trim().toLowerCase();
-  if (keyword) list = list.filter((product) => `${product.name} ${product.description}`.toLowerCase().includes(keyword));
+  const subcategory = els.productSubcategory.value;
+  if (subcategory) list = list.filter((product) => productSubcategory(product) === subcategory);
+  if (keyword) list = list.filter((product) => `${product.name} ${product.description} ${productSubcategory(product)} ${productSpec(product)} ${productVariants(product).join(" ")}`.toLowerCase().includes(keyword));
   const sort = els.productSort.value;
   if (sort === "priceAsc") list.sort((a, b) => (productListedPrice(a) ?? Infinity) - (productListedPrice(b) ?? Infinity));
   if (sort === "priceDesc") list.sort((a, b) => (productListedPrice(b) ?? 0) - (productListedPrice(a) ?? 0));
@@ -272,6 +322,8 @@ function renderProducts() {
         <span class="status-pill" data-status="${product.status}">${product.status}</span>
         <h3>${product.name}</h3>
         <p>${product.description}</p>
+        <div class="product-meta"><span>${productSubcategory(product)}</span><span>${productSpec(product)}</span></div>
+        ${productVariants(product).length > 1 ? `<label class="variant-picker">規格<select data-variant-for="${product.id}">${productVariants(product).map((variant) => `<option>${variant}</option>`).join("")}</select></label>` : ""}
         <div class="product-details"><span>${productOfficialYen(product) ? `官網 ${yen(productOfficialYen(product))} / ${product.weight.toLocaleString("zh-TW")}g / 含代購費` : `${product.weight.toLocaleString("zh-TW")}g`}</span><strong class="price">${productDisplayPrice(product)}</strong></div>
         <div class="product-actions">
           <button class="cart-button" type="button" data-id="${product.id}" ${product.status === "售完" ? "disabled" : ""}>${product.status === "售完" ? "已售完" : "加入購物車"}</button>
@@ -284,30 +336,32 @@ function renderProducts() {
 function renderCart() {
   els.cartItems.innerHTML = cart.length ? cart.map((item) => `
     <div class="cart-row">
-      <div><h3>${item.name}</h3><p>${money(item.price)} x ${item.quantity} / ${item.weight * item.quantity}g</p></div>
+      <div><h3>${item.name}</h3><p>規格：${item.selectedVariant || productSpec(item)}・單價 ${money(item.price)}・數量 ${item.quantity}</p><strong>小計 ${money(item.price * item.quantity)}</strong></div>
       <div class="cart-controls">
-        <button class="qty-button" type="button" data-action="decrease" data-id="${item.id}">-</button>
+        <button class="qty-button" type="button" data-action="decrease" data-id="${item.cartId}">-</button>
         <strong>${item.quantity}</strong>
-        <button class="qty-button" type="button" data-action="increase" data-id="${item.id}">+</button>
-        <button class="remove-button" type="button" data-action="remove" data-id="${item.id}">刪除</button>
+        <button class="qty-button" type="button" data-action="increase" data-id="${item.cartId}">+</button>
+        <button class="remove-button" type="button" data-action="remove" data-id="${item.cartId}">刪除</button>
       </div>
     </div>`).join("") : '<p class="empty-cart">購物車目前是空的。</p>';
   const estimate = cartEstimate();
   els.cartWeight.textContent = `${estimate.weight.toLocaleString("zh-TW")}g`;
   els.cartSubtotal.textContent = money(estimate.subtotal);
+  els.cartDiscount.textContent = `-${money(estimate.discount)}`;
   els.cartShipping.textContent = estimate.outOfRange ? "需另詢" : money(estimate.shippingTwd);
-  els.cartServiceFee.textContent = cart.length ? "已含於商品價" : money(0);
   els.cartTotal.textContent = estimate.outOfRange || estimate.quoteOnly ? "需另詢" : money(estimate.total);
 }
 
-function addToCart(id) {
+function addToCart(id, selectedVariant) {
   const product = products.find((item) => item.id === id);
-  const existing = cart.find((item) => item.id === id);
+  const variant = selectedVariant || productSpec(product);
+  const cartId = `${id}::${variant}`;
+  const existing = cart.find((item) => item.cartId === cartId);
   if (existing) existing.quantity += 1;
   else if (product) {
     const price = productListedPrice(product);
     if (price === null) return showSummary(`${product.name} 金額超過固定加價級距，請改用 LINE 詢問報價。`);
-    cart.push({ ...product, price, yenPrice: productOfficialYen(product), quantity: 1 });
+    cart.push({ ...product, cartId, selectedVariant: variant, price, yenPrice: productOfficialYen(product), quantity: 1 });
   }
   renderCart();
 }
@@ -361,8 +415,8 @@ function calculateShipping(showMessage = false) {
 
 function buildCartMessage(formData, id) {
   const estimate = cartEstimate();
-  const lines = cart.map((item) => `- ${item.name} / 官網${item.yenPrice ? yen(item.yenPrice) : "未填"} / 含代購價 ${money(item.price)} x ${item.quantity} / ${item.weight * item.quantity}g`);
-  return ["瑤光代購 固定商品報價單", `報價編號：${id}`, `姓名：${formData.name}`, `聯絡方式：${formData.contact}`, `付款方式：${formData.payment}`, `取貨方式：${formData.delivery}`, "商品：", ...lines, `商品小計：${money(estimate.subtotal)}`, `包裝後重量：${estimate.weight.toLocaleString("zh-TW")}g`, `寄送方式：${estimate.methodLabel}`, `預估國際運費：${estimate.outOfRange ? "需另詢" : `${yen(estimate.shippingYen)} / 約 ${money(estimate.shippingTwd)}`}`, "代購服務費：已含於商品價格", `其他費用：${money(estimate.extra)}`, `預估合計：${estimate.outOfRange ? "需另詢" : money(estimate.total)}`, `備註：${formData.note || "無"}`].join("\n");
+  const lines = cart.map((item) => `- ${item.name} / 規格：${item.selectedVariant} / 單價 ${money(item.price)} x ${item.quantity} / 小計 ${money(item.price * item.quantity)}`);
+  return ["瑤光代購 固定商品報價單", `報價編號：${id}`, `姓名：${formData.name}`, `聯絡方式：${formData.contact}`, `付款方式：${formData.payment}`, `取貨方式：${formData.delivery}`, "商品：", ...lines, `商品小計：${money(estimate.subtotal)}`, `優惠券：${activeCoupon?.code || "未使用"} / 折抵 ${money(estimate.discount)}`, `包裝後重量：${estimate.weight.toLocaleString("zh-TW")}g`, `寄送方式：${estimate.methodLabel}`, `預估國際運費：${estimate.outOfRange ? "需另詢" : `${yen(estimate.shippingYen)} / 約 ${money(estimate.shippingTwd)}`}`, `其他費用：${money(estimate.extra)}`, `預估合計：${estimate.outOfRange ? "需另詢" : money(estimate.total)}`, `備註：${formData.note || "無"}`].join("\n");
 }
 
 function renderAdminProducts() {
@@ -376,12 +430,48 @@ function renderAdminProducts() {
     </article>`).join("");
 }
 
+function renderCoupons() {
+  els.couponAdminList.innerHTML = coupons.length ? coupons.map((coupon) => `
+    <div class="coupon-row">
+      <div><strong>${coupon.code}</strong><span>${coupon.type === "percent" ? `${coupon.value}%` : money(coupon.value)}・滿 ${money(coupon.minimum)}・${coupon.expiry || "無期限"}・${coupon.active ? "啟用" : "停用"}</span></div>
+      <button class="secondary-button danger-button" type="button" data-code="${coupon.code}">刪除</button>
+    </div>`).join("") : '<p class="empty-cart">尚未設定優惠券。</p>';
+}
+
+function applyCouponCode() {
+  const code = els.couponCode.value.trim().toUpperCase();
+  activeCoupon = coupons.find((coupon) => coupon.code === code) || null;
+  const subtotal = cartEstimate().subtotal;
+  if (!code) {
+    activeCoupon = null;
+    els.couponMessage.textContent = "";
+  } else if (!activeCoupon) {
+    els.couponMessage.textContent = "找不到這張優惠券。";
+  } else if (!activeCoupon.active) {
+    activeCoupon = null;
+    els.couponMessage.textContent = "這張優惠券目前未啟用。";
+  } else if (activeCoupon.expiry && new Date(`${activeCoupon.expiry}T23:59:59`) < new Date()) {
+    activeCoupon = null;
+    els.couponMessage.textContent = "這張優惠券已過期。";
+  } else if (subtotal < activeCoupon.minimum) {
+    const minimum = activeCoupon.minimum;
+    activeCoupon = null;
+    els.couponMessage.textContent = `商品小計需滿 ${money(minimum)} 才能使用。`;
+  } else {
+    els.couponMessage.textContent = `已套用 ${code}。`;
+  }
+  renderCart();
+}
+
 function setProductForm(product) {
   els.editingProductId.value = product.id;
   els.adminName.value = product.name;
   els.adminCategory.value = product.category;
-  els.adminPrice.value = product.price;
+  els.adminSubcategory.value = product.subcategory || productSubcategory(product);
+  els.adminPrice.value = productOfficialYen(product) || product.price;
   els.adminWeight.value = product.weight;
+  els.adminSpec.value = product.spec || productSpec(product);
+  els.adminVariants.value = productVariants(product).join("|");
   els.adminStatus.value = product.status;
   els.adminImage.value = product.image;
   els.adminDescription.value = product.description;
@@ -462,12 +552,14 @@ els.backToCategories.addEventListener("click", () => {
 });
 
 els.productSearch.addEventListener("input", renderProducts);
+els.productSubcategory.addEventListener("change", renderProducts);
 els.productSort.addEventListener("change", renderProducts);
 
 els.productGrid.addEventListener("click", (event) => {
   const button = event.target.closest(".cart-button");
   if (!button) return;
-  addToCart(button.dataset.id);
+  const selected = els.productGrid.querySelector(`[data-variant-for="${button.dataset.id}"]`)?.value;
+  addToCart(button.dataset.id, selected);
   button.textContent = "已加入";
   setTimeout(() => { button.textContent = "加入購物車"; }, 1000);
 });
@@ -475,12 +567,20 @@ els.productGrid.addEventListener("click", (event) => {
 els.cartItems.addEventListener("click", (event) => {
   const button = event.target.closest("button");
   if (!button) return;
-  const item = cart.find((cartItem) => cartItem.id === button.dataset.id);
+  const item = cart.find((cartItem) => cartItem.cartId === button.dataset.id);
   if (!item) return;
   if (button.dataset.action === "increase") item.quantity += 1;
   if (button.dataset.action === "decrease") item.quantity -= 1;
-  if (button.dataset.action === "remove" || item.quantity <= 0) cart = cart.filter((cartItem) => cartItem.id !== item.id);
+  if (button.dataset.action === "remove" || item.quantity <= 0) cart = cart.filter((cartItem) => cartItem.cartId !== item.cartId);
   renderCart();
+});
+
+els.applyCoupon.addEventListener("click", applyCouponCode);
+els.couponCode.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    applyCouponCode();
+  }
 });
 
 els.checkoutForm.addEventListener("submit", (event) => {
@@ -529,7 +629,7 @@ els.settingsForm.addEventListener("submit", (event) => {
 els.adminForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const id = els.editingProductId.value || `custom-${Date.now()}`;
-  const product = { id, name: els.adminName.value.trim(), category: els.adminCategory.value, price: Number(els.adminPrice.value), weight: Number(els.adminWeight.value), status: els.adminStatus.value, image: els.adminImage.value.trim() || "https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?auto=format&fit=crop&w=900&q=80", description: els.adminDescription.value.trim() };
+  const product = { id, name: els.adminName.value.trim(), category: els.adminCategory.value, subcategory: els.adminSubcategory.value.trim(), yenPrice: Number(els.adminPrice.value), price: Number(els.adminPrice.value), weight: Number(els.adminWeight.value), spec: els.adminSpec.value.trim(), variants: els.adminVariants.value.trim().split("|").filter(Boolean), status: els.adminStatus.value, image: els.adminImage.value.trim() || "https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?auto=format&fit=crop&w=900&q=80", description: els.adminDescription.value.trim() };
   const index = products.findIndex((item) => item.id === id);
   if (index >= 0) products[index] = product;
   else products.push(product);
@@ -539,6 +639,36 @@ els.adminForm.addEventListener("submit", (event) => {
   if (activeCategory) renderProducts();
   renderAdminProducts();
   showSummary(index >= 0 ? "商品已更新。" : "商品已新增到指定分類。");
+});
+
+els.couponForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const coupon = {
+    code: els.adminCouponCode.value.trim().toUpperCase(),
+    type: els.adminCouponType.value,
+    value: Number(els.adminCouponValue.value),
+    minimum: Number(els.adminCouponMinimum.value) || 0,
+    expiry: els.adminCouponExpiry.value,
+    active: els.adminCouponActive.checked,
+  };
+  coupons = coupons.filter((item) => item.code !== coupon.code);
+  coupons.push(coupon);
+  save(couponStorageKey, coupons);
+  els.couponForm.reset();
+  els.adminCouponActive.checked = true;
+  renderCoupons();
+  renderCart();
+  showSummary(`優惠券 ${coupon.code} 已儲存。`);
+});
+
+els.couponAdminList.addEventListener("click", (event) => {
+  const button = event.target.closest("button");
+  if (!button) return;
+  coupons = coupons.filter((coupon) => coupon.code !== button.dataset.code);
+  if (activeCoupon?.code === button.dataset.code) activeCoupon = null;
+  save(couponStorageKey, coupons);
+  renderCoupons();
+  renderCart();
 });
 
 els.cancelEditProduct.addEventListener("click", resetProductForm);
@@ -621,6 +751,7 @@ els.summaryLineButton.href = lineOfficialUrl;
 renderCategories();
 renderCart();
 renderAdminProducts();
+renderCoupons();
 renderOrders();
 calculateShipping(false);
 updateAdminAccess();
