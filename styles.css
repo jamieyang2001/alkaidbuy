@@ -366,6 +366,12 @@ input:focus, select:focus, textarea:focus { border-color: var(--green); box-shad
 }
 @media (max-width: 560px) {
   body { padding-bottom: 72px; }
+  .site-header { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; gap: 10px 12px; overflow: hidden; }
+  .site-header .brand { grid-column: 1; grid-row: 1; min-width: 0; }
+  .site-header .account-button { grid-column: 2; grid-row: 1; width: 100%; margin: 0; text-align: center; }
+  .site-header .language-select { grid-column: 1; grid-row: 2; width: 100%; min-width: 0; }
+  .site-header .line-button { grid-column: 2; grid-row: 2; width: 100%; }
+  .site-header .nav-links { grid-column: 1 / -1; grid-row: 3; order: initial; }
   .hero { min-height: 620px; padding: 68px 20px 112px; }
   .section, .summary-panel, .service-strip { width: calc(100% - 24px); }
   .cart-row, .admin-product-card { grid-template-columns: 1fr; }

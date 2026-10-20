@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-labelledby="title desc">
+  <title id="title">商品圖片確認中</title>
+  <desc id="desc">商品圖片暫時無法載入</desc>
+  <rect width="800" height="600" fill="#f1f4f2"/>
+  <rect x="260" y="135" width="280" height="280" rx="12" fill="#fff" stroke="#b9c7c1" stroke-width="8"/>
+  <path d="M310 350l72-84 54 58 38-38 66 64" fill="none" stroke="#5d776d" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="454" cy="224" r="28" fill="#d7a74b"/>
+  <text x="400" y="486" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#29483f">IMAGE CHECKING</text>
+  <text x="400" y="532" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" fill="#5d6d67">商品圖片確認中</text>
+</svg>

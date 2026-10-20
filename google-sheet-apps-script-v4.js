@@ -17,6 +17,7 @@ const PURCHASE_ALLOCATION_SHEET = "採購分配";
 const PACKAGE_SHEET = "日本包裹";
 const COST_SHEET = "成本紀錄";
 const STOCK_SHEET = "現貨庫存";
+const PUBLIC_SETTINGS_SHEET = "網站設定";
 
 function doGet(e) {
   const action = String((e.parameter && e.parameter.action) || "health");
@@ -24,6 +25,7 @@ function doGet(e) {
     if (action === "lookup") return json_(lookupOrder_(e.parameter.quoteId));
     if (action === "memberProfile") return json_({ ok: true, profile: memberProfile_(e.parameter.token) });
     if (action === "catalog") return json_({ ok: true, products: catalogList_() });
+    if (action === "publicSettings") return json_({ ok: true, settings: publicSettings_() });
     if (action === "orders") {
       requireAdminToken_(e.parameter.adminToken);
       return json_({ ok: true, orders: listOrdersWithItems_() });
@@ -65,6 +67,7 @@ function doPost(e) {
     if (action === "packageSave") { requireAdminToken_(data.adminToken); return json_(packageSave_(data)); }
     if (action === "costSave") { requireAdminToken_(data.adminToken); return json_(costSave_(data)); }
     if (action === "stockSave") { requireAdminToken_(data.adminToken); return json_(stockSave_(data)); }
+    if (action === "settingsSave") { requireAdminToken_(data.adminToken); return json_(settingsSave_(data)); }
     if (action === "sendPurchaseNotice") { requireAdminToken_(data.adminToken); return json_(sendPurchaseNotice_(data.quoteId)); }
     if (action === "createBackup") { requireAdminToken_(data.adminToken); dailyBackup_(); return json_({ ok: true, message: "備份已建立" }); }
     if (action === "restoreBackup") { requireAdminToken_(data.adminToken); return json_(restoreBackup_(data)); }
@@ -628,6 +631,35 @@ function costMap_() { const sheet=ensureSheet_(COST_SHEET,["訂單編號","商�
 function costSave_(data) { const sheet=ensureSheet_(COST_SHEET,["訂單編號","商品成本台幣","日本國內運費","國際運費","其他成本","日幣匯率","更新時間"]),id=String(data.quoteId),values=[id,number_(data.productCostTwd),number_(data.domesticShipping),number_(data.internationalShipping),number_(data.otherCost),number_(data.yenRate),new Date()],cell=sheet.getLastRow()<2?null:sheet.getRange(2,1,sheet.getLastRow()-1,1).createTextFinder(id).matchEntireCell(true).findNext();if(cell)sheet.getRange(cell.getRow(),1,1,7).setValues([values]);else sheet.appendRow(values);return {ok:true}; }
 function stockSave_(data) { const sheet=ensureSheet_(STOCK_SHEET,["商品ID","商品名稱","圖片","規格","現貨數量","售價","狀態","更新時間"]),id=String(data.productId),values=[id,safe_(data.name),safe_(data.image),safe_(data.variant),number_(data.quantity),number_(data.price),safe_(data.status||"販售中"),new Date()],cell=sheet.getLastRow()<2?null:sheet.getRange(2,1,sheet.getLastRow()-1,1).createTextFinder(id).matchEntireCell(true).findNext();if(cell)sheet.getRange(cell.getRow(),1,1,8).setValues([values]);else sheet.appendRow(values);return {ok:true}; }
 function stockList_(){const sheet=ensureSheet_(STOCK_SHEET,["商品ID","商品名稱","圖片","規格","現貨數量","售價","狀態","更新時間"]);if(sheet.getLastRow()<2)return[];return sheet.getRange(2,1,sheet.getLastRow()-1,8).getValues().map(function(r){return{productId:r[0],name:r[1],image:r[2],variant:r[3],quantity:number_(r[4]),price:number_(r[5]),status:r[6],updatedAt:dateText_(r[7])};});}
+
+function publicSettings_() {
+  const defaults = { yenRate: 0.205, domesticYen: 0, shippingMethod: "ems", updatedAt: "" };
+  const sheet = ensureSheet_(PUBLIC_SETTINGS_SHEET, ["設定", "值", "更新時間"]);
+  if (sheet.getLastRow() < 2) return defaults;
+  sheet.getRange(2, 1, sheet.getLastRow() - 1, 3).getValues().forEach(function(row) {
+    if (row[0] === "yenRate") defaults.yenRate = number_(row[1]) || defaults.yenRate;
+    if (row[0] === "domesticYen") defaults.domesticYen = Math.max(0, number_(row[1]));
+    if (row[0] === "shippingMethod" && /^(ems|smallPacketAir)$/.test(String(row[1]))) defaults.shippingMethod = String(row[1]);
+    if (row[2]) defaults.updatedAt = dateText_(row[2]);
+  });
+  return defaults;
+}
+
+function settingsSave_(data) {
+  const values = {
+    yenRate: Math.max(0.001, number_(data.yenRate)),
+    domesticYen: Math.max(0, number_(data.domesticYen)),
+    shippingMethod: /^(ems|smallPacketAir)$/.test(String(data.shippingMethod)) ? String(data.shippingMethod) : "ems"
+  };
+  const sheet = ensureSheet_(PUBLIC_SETTINGS_SHEET, ["設定", "值", "更新時間"]);
+  Object.keys(values).forEach(function(key) {
+    const finder = sheet.getLastRow() < 2 ? null : sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).createTextFinder(key).matchEntireCell(true).findNext();
+    if (finder) sheet.getRange(finder.getRow(), 2, 1, 2).setValues([[values[key], new Date()]]);
+    else sheet.appendRow([key, values[key], new Date()]);
+  });
+  audit_("更新網站收費設定", "settings", JSON.stringify(values));
+  return { ok: true, settings: publicSettings_() };
+}
 function sendPurchaseNotice_(quoteId){const order=listOrdersWithItems_().filter(function(item){return item.quoteId===quoteId;})[0];if(!order)throw new Error("找不到訂單");const email=String(order.contact||"");if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))throw new Error("客人聯絡方式不是Email");const lines=(order.items||[]).map(function(item){return item.name+"：分配 "+item.allocated+"/"+item.quantity+"（"+item.purchaseStatus+"）";}).join("\n");sendEmail_(email,"瑤光代購採購進度："+quoteId,"訂單編號："+quoteId+"\n\n"+lines+"\n\n會員中心：https://alkaidbuy.vercel.app/member.html","採購進度",quoteId);return{ok:true};}
 
 function sendEmail_(to, subject, body, type, reference) {

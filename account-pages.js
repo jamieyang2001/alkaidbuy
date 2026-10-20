@@ -1,5 +1,6 @@
 const ORDER_API = "https://script.google.com/macros/s/AKfycbzpjqqe6NV_xusYI0mkrV3W9HtXsgQg-b-9vwNm4YvJ7tZij-Us80JtAm4MgCalAKFy/exec";
 const CART_KEY = "yaoguang-cart-v1";
+const CART_CLEARED_KEY = "yaoguang-cart-cleared-at";
 const SESSION_KEY = "yaoguang-member-session";
 const COUPON_KEY = "yaoguang-coupons";
 const SETTINGS_KEY = "yaoguang-fee-settings";
@@ -46,9 +47,19 @@ function apiRequest(action, payload = {}, method = "POST") {
 
 function currentSession() { return load(SESSION_KEY, null); }
 
+async function loadPublicSettings() {
+  try {
+    const result = await apiRequest("publicSettings", {}, "GET");
+    const current = load(SETTINGS_KEY, {});
+    save(SETTINGS_KEY, { ...current, method: result.settings?.shippingMethod || "ems", rate: Number(result.settings?.yenRate || 0.205), domesticYen: Number(result.settings?.domesticYen || 0) });
+    if (document.body.dataset.page === "cart") renderCart();
+  } catch {}
+}
+
 function productSnapshots() { return load(SNAPSHOT_KEY, {}); }
 function productList(ids) { const snapshots = productSnapshots(); return (ids || []).map((id) => snapshots[id]).filter(Boolean); }
 function addProductsToCart(items) {
+  localStorage.removeItem(CART_CLEARED_KEY);
   items.forEach((product) => {
     const variant = product.selectedVariant || product.variant || product.spec || "標準款";
     const cartId = `${product.id}::${variant}`;
@@ -80,7 +91,7 @@ function renderMemberProfile(profile) {
   if (cloudData.favorites?.length) save(FAVORITE_KEY, cloudData.favorites);
   if (cloudData.recent?.length) save(RECENT_KEY, cloudData.recent);
   if (cloudData.addresses?.length) save(ADDRESS_KEY, cloudData.addresses);
-  if (cloudData.cart?.length && !load(CART_KEY, []).length) save(CART_KEY, cloudData.cart);
+  if (cloudData.cart?.length && !load(CART_KEY, []).length && !localStorage.getItem(CART_CLEARED_KEY)) save(CART_KEY, cloudData.cart);
   if (cloudData.snapshots && Object.keys(cloudData.snapshots).length) save(SNAPSHOT_KEY, { ...load(SNAPSHOT_KEY, {}), ...cloudData.snapshots });
   const coupons = profile.coupons || [];
   $("#memberCouponList").innerHTML = coupons.length ? coupons.map((coupon) => `
@@ -384,6 +395,7 @@ async function initCartPage() {
   $("#clearCart").addEventListener("click", async () => {
     if (cart.length && !confirm("確定要清空購物車嗎？")) return;
     cart = [];
+    localStorage.setItem(CART_CLEARED_KEY, new Date().toISOString());
     activeCoupon = null;
     save(CART_KEY, cart);
     await syncMemberData();
@@ -409,6 +421,7 @@ async function initCartPage() {
       localOrders.unshift({ ...order, status: "待確認", createdAt: new Date().toLocaleString("zh-TW") });
       save(ORDER_KEY, localOrders);
       cart = [];
+      localStorage.setItem(CART_CLEARED_KEY, new Date().toISOString());
       save(CART_KEY, cart);
       await syncMemberData();
       renderCart();
@@ -431,7 +444,7 @@ async function initCartPage() {
 }
 
 if (document.body.dataset.page === "member") initMemberPage();
-if (document.body.dataset.page === "cart") initCartPage();
+if (document.body.dataset.page === "cart") { initCartPage(); loadPublicSettings(); }
 window.addEventListener("pageshow", () => {
   cart = load(CART_KEY, []);
   if (document.body.dataset.page === "cart") renderCart();

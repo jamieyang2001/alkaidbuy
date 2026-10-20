@@ -21,6 +21,26 @@ const defaultProducts = [
   {"id":"lawson-10","name":"LAWSON 國產馬鈴薯洋芋片 コンソメ味","category":"lawson","subcategory":"洋芋片／鹹食","yenPrice":130,"weight":70,"spec":"1袋","status":"可代購","description":"日本國產馬鈴薯製，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l733182_1.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1473728_1996.html"},
   {"id":"lawson-11","name":"LAWSON 厚切洋芋片 酸奶洋蔥味","category":"lawson","subcategory":"洋芋片／鹹食","yenPrice":138,"weight":75,"spec":"1袋","status":"可代購","description":"LAWSON 原創酸奶洋蔥風味洋芋片，價格與庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l790765.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1511155_1996.html"},
   {"id":"lawson-12","name":"LAWSON すっぱムーチョ 清爽梅味","category":"lawson","subcategory":"洋芋片／鹹食","yenPrice":138,"weight":75,"spec":"1袋","status":"可代購","description":"LAWSON 梅子風味洋芋片，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l790767.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1511154_1996.html"},
+  {"id":"lawson-13","name":"LAWSON オー・ザック 清爽鹽味","category":"lawson","subcategory":"LAWSON 零食","yenPrice":148,"weight":85,"spec":"1袋","status":"可代購","description":"LAWSON 官網零食，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l601703_5.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1389543_1996.html"},
+  {"id":"lawson-14","name":"LAWSON オー・ザック 濃海苔鹽味","category":"lawson","subcategory":"LAWSON 零食","yenPrice":148,"weight":85,"spec":"1袋","status":"可代購","description":"LAWSON 官網零食，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l787546.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1510253_1996.html"},
+  {"id":"lawson-15","name":"LAWSON 迷你網狀洋芋圈 鹽味","category":"lawson","subcategory":"LAWSON 零食","yenPrice":108,"weight":65,"spec":"1袋","status":"可代購","description":"LAWSON 官網零食，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l806452_1.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1527769_1996.html"},
+  {"id":"lawson-16","name":"LAWSON サッポロポテト BBQ味","category":"lawson","subcategory":"LAWSON 零食","yenPrice":148,"weight":90,"spec":"1袋","status":"可代購","description":"LAWSON 官網零食，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l693382_3.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1464847_1996.html"},
+  {"id":"lawson-17","name":"LAWSON サッポロポテト 蔬菜味","category":"lawson","subcategory":"LAWSON 零食","yenPrice":148,"weight":90,"spec":"1袋","status":"可代購","description":"LAWSON 官網零食，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l693383_3.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1464848_1996.html"},
+  {"id":"lawson-18","name":"LAWSON ポテトリング なげわ 鹽味","category":"lawson","subcategory":"LAWSON 零食","yenPrice":148,"weight":80,"spec":"1袋","status":"可代購","description":"LAWSON 官網零食，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l693388_2.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1464653_1996.html"},
+  {"id":"lawson-19","name":"LAWSON 絕品蝦味仙 鳴門鹽干貝味","category":"lawson","subcategory":"LAWSON 零食","yenPrice":148,"weight":80,"spec":"1袋","status":"可代購","description":"LAWSON 官網零食，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l787550_2.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1510074_1996.html"},
+  {"id":"lawson-20","name":"LAWSON ビーノ 鹽胡椒味","category":"lawson","subcategory":"LAWSON 零食","yenPrice":138,"weight":75,"spec":"1袋","status":"可代購","description":"LAWSON 官網零食，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l782715.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1507647_1996.html"},
+  {"id":"lawson-21","name":"LAWSON Baby Star 拉麵丸 雞汁味","category":"lawson","subcategory":"LAWSON 零食","yenPrice":130,"weight":75,"spec":"1袋","status":"可代購","description":"LAWSON 官網零食，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l765531_1.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1495544_1996.html"},
+  {"id":"lawson-22","name":"LAWSON Baby Star 辣味雞汁寬麵","category":"lawson","subcategory":"LAWSON 零食","yenPrice":130,"weight":75,"spec":"1袋","status":"可代購","description":"LAWSON 官網零食，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l773582_1.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1498810_1996.html"},
+  {"id":"lawson-23","name":"LAWSON 暴君哈瓦那超辣零食","category":"lawson","subcategory":"LAWSON 零食","yenPrice":145,"weight":75,"spec":"1袋","status":"可代購","description":"辛辣商品，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l780956.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1506049_1996.html"},
+  {"id":"lawson-24","name":"LAWSON 麻辣湯風味零食","category":"lawson","subcategory":"LAWSON 零食","yenPrice":158,"weight":55,"spec":"27g","status":"可代購","description":"辛辣商品，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l816302.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1531746_1996.html"},
+  {"id":"lawson-25","name":"LAWSON 濃厚起司脆粒","category":"lawson","subcategory":"LAWSON 零食","yenPrice":130,"weight":75,"spec":"1袋","status":"可代購","description":"LAWSON 官網零食，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l791627_2.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1464849_1996.html"},
+  {"id":"lawson-26","name":"LAWSON 起司黑胡椒零食棒","category":"lawson","subcategory":"LAWSON 零食","yenPrice":138,"weight":75,"spec":"1袋","status":"可代購","description":"LAWSON 官網零食，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l793432_1.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1512099_1996.html"},
+  {"id":"lawson-27","name":"LAWSON スコーン 烤玉米味","category":"lawson","subcategory":"LAWSON 零食","yenPrice":138,"weight":85,"spec":"1袋","status":"可代購","description":"LAWSON 官網零食，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l773583_1.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1500292_1996.html"},
+  {"id":"lawson-28","name":"LAWSON スコーン BBQ味","category":"lawson","subcategory":"LAWSON 零食","yenPrice":138,"weight":85,"spec":"1袋","status":"可代購","description":"LAWSON 官網零食，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l654831_4.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1448966_1996.html"},
+  {"id":"lawson-29","name":"LAWSON 濃厚高湯玉米棒","category":"lawson","subcategory":"LAWSON 零食","yenPrice":130,"weight":75,"spec":"1袋","status":"可代購","description":"LAWSON 官網零食，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l793446.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1512945_1996.html"},
+  {"id":"lawson-30","name":"LAWSON 墨西哥辣肉醬玉米片","category":"lawson","subcategory":"LAWSON 零食","yenPrice":138,"weight":80,"spec":"1袋","status":"可代購","description":"LAWSON 官網零食，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l803687_1.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1455096_1996.html"},
+  {"id":"lawson-31","name":"LAWSON 超大包焦糖玉米","category":"lawson","subcategory":"LAWSON 零食","yenPrice":218,"weight":120,"spec":"大包裝","status":"可代購","description":"LAWSON 官網零食，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l660417_4.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1440150_1996.html"},
+  {"id":"lawson-32","name":"LAWSON 瀨戶內海鹽爆米花","category":"lawson","subcategory":"LAWSON 零食","yenPrice":148,"weight":75,"spec":"1袋","status":"可代購","description":"僅以瀨戶內海鹽調味，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l804504.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1520813_1996.html"},
   {"id":"matsukiyo-01","name":"matsukiyo 天然純棉化妝棉 248枚","category":"matsukiyo","price":62,"weight":180,"status":"可代購","description":"官網參考價 283円。乾燥棉製品，適合國際寄送。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/9/4973560041287_01_f08d666c09654f607bd9ce50a85f8fab.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4973560041287"},
   {"id":"matsukiyo-02","name":"matsukiyo 大尺寸純棉化妝棉 130枚","category":"matsukiyo","price":72,"weight":180,"status":"可代購","description":"官網參考價 327円。乾燥棉製品，適合國際寄送。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/9/4973202205060_01_f08d666c09654f607bd9ce50a85f8fab.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4973202205060"},
   {"id":"matsukiyo-03","name":"うるふか化妝棉 100枚","category":"matsukiyo","price":72,"weight":150,"status":"可代購","description":"官網參考價 327円。100% 純棉乾燥用品。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/9/4973202301045_01_008016d565441e4c8deed5aee3222fcd.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4973202301045"},
@@ -60,7 +80,7 @@ const defaultProducts = [
   {"id":"matsukiyo-43","name":"UHA ぷにキャラグミ ディズニープリンセス","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":198,"price":198,"weight":65,"spec":"50g","variants":["50g"],"status":"可代購","description":"官網參考價約 198円。糖果食品，輸入數量與成分仍需依規定確認。","image":"https://www.uha-mikakuto.co.jp/catalog/gummy/img/gu300.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4902750794160"},
   {"id":"matsukiyo-44","name":"UHA グミだま いちご","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":198,"price":198,"weight":70,"spec":"55g","variants":["55g"],"status":"可代購","description":"官網參考價約 198円。草莓風味糖果食品，輸入數量與成分仍需確認。","image":"https://cdn.tajimaya-app.com/current/4902750837812.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4902750837812"},
   {"id":"matsukiyo-45","name":"UHA 特濃ミルク 8.2","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":238,"price":238,"weight":105,"spec":"88g","variants":["88g"],"status":"可代購","description":"官網參考價約 238円。牛奶糖，含乳成分，需確認食品輸入規定。","image":"https://cdn.askul.co.jp/img/product/3L1/EJ14069_3L1.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4902750910454"},
-  {"id":"matsukiyo-46","name":"UHA 純露 糖果","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":248,"price":248,"weight":140,"spec":"120g","variants":["120g"],"status":"可代購","description":"官網參考價約 248円。經典糖果，輸入數量與成分仍需確認。","image":"https://image.biccamera.com/img/00000004659550_A02.jpg?sr.dh=600&sr.dw=600&sr.jqh=60&sr.mat=1","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4902750697874"},
+  {"id":"matsukiyo-46","name":"UHA 純露 糖果","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":248,"price":248,"weight":140,"spec":"120g","variants":["120g"],"status":"可代購","description":"官網參考價約 248円。經典糖果，輸入數量與成分仍需確認。","image":"https://item-shopping.c.yimg.jp/i/n/cocodecow_yr0021","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4902750697874"},
   {"id":"matsukiyo-47","name":"DHC マルチビタミン 60日分","category":"matsukiyo","subcategory":"DHC 維他命／保健食品","yenPrice":861,"price":861,"weight":80,"spec":"60日分","variants":["60日分"],"status":"需確認輸入","description":"官網參考價約 861円。營養機能食品，需確認台灣輸入規定與數量。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/5/4511413407363_01_f08d666c09654f607bd9ce50a85f8fab.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4511413407363"},
   {"id":"matsukiyo-48","name":"DHC ビタミンC 60日分","category":"matsukiyo","subcategory":"DHC 維他命／保健食品","yenPrice":396,"price":396,"weight":80,"spec":"60日分","variants":["60日分"],"status":"需確認輸入","description":"官網參考價約 396円。維他命C補充品，需確認輸入規定。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/5/4511413408254_01_9ce50c0680c5a2ad9a59dca50b42dbe7.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4511413408254"},
   {"id":"matsukiyo-49","name":"DHC ビタミンBミックス 60日分","category":"matsukiyo","subcategory":"DHC 維他命／保健食品","yenPrice":498,"price":498,"weight":80,"spec":"60日分","variants":["60日分"],"status":"需確認輸入","description":"官網參考價約 498円。維他命B群補充品，需確認台灣輸入規定。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/5/4511413405055_01_f08d666c09654f607bd9ce50a85f8fab.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4511413405055"},
@@ -1047,6 +1067,7 @@ const quoteSequenceKey = "yaoguang-quote-sequence";
 const feeSettingsKey = "yaoguang-fee-settings";
 const couponStorageKey = "yaoguang-coupons";
 const cartStorageKey = "yaoguang-cart-v1";
+const cartClearedStorageKey = "yaoguang-cart-cleared-at";
 const adminAuthKey = "yaoguang-admin-auth";
 const adminTokenKey = "yaoguang-admin-token";
 const memberSessionKey = "yaoguang-member-session";
@@ -1089,7 +1110,13 @@ const els = {
   dashboardStats: $("#dashboardStats"), refreshDashboard: $("#refreshDashboard"), syncCatalog: $("#syncCatalog"), enableBackup: $("#enableBackup"), operationsMessage: $("#operationsMessage"),
 };
 
-let products = load(productStorageKey, defaultProducts);
+function mergeCatalog(baseProducts, overrideProducts) {
+  const overrides = new Map((overrideProducts || []).map((product) => [product.id, product]));
+  const merged = baseProducts.map((product) => ({ ...product, ...(overrides.get(product.id) || {}) }));
+  const baseIds = new Set(baseProducts.map((product) => product.id));
+  return merged.concat((overrideProducts || []).filter((product) => !baseIds.has(product.id)));
+}
+let products = mergeCatalog(defaultProducts, load(productStorageKey, []));
 let orders = load(orderStorageKey, []);
 let coupons = load(couponStorageKey, []);
 let cart = load(cartStorageKey, []);
@@ -1175,6 +1202,23 @@ function applyFeeSettings(settings) {
 function fixedServiceFeeByYen(yenAmount) {
   const tier = fixedServiceTiers.find((item) => yenAmount <= item.max);
   return tier ? tier.fee : null;
+}
+
+async function loadPublicSettings() {
+  try {
+    const result = await apiRequest("publicSettings", {}, "GET");
+    const settings = result.settings || {};
+    const current = load(feeSettingsKey, {});
+    const merged = { ...current, method: settings.shippingMethod || "ems", rate: Number(settings.yenRate || 0.205), domesticYen: Number(settings.domesticYen || 0) };
+    save(feeSettingsKey, merged);
+    els.shippingMethod.value = merged.method;
+    els.yenRate.value = merged.rate;
+    els.domesticYen.value = merged.domesticYen;
+    calculateShipping(false);
+    renderCart();
+  } catch (error) {
+    console.warn("Public settings unavailable", error);
+  }
 }
 
 function productSubcategory(product) {
@@ -1289,7 +1333,7 @@ async function loadCloudCatalog() {
   try {
     const result = await apiRequest("catalog", {}, "GET");
     if (!result.products?.length) return;
-    products = result.products;
+    products = mergeCatalog(defaultProducts, result.products);
     save(productStorageKey, products);
     renderCategories();
     if (activeCategory) renderProducts();
@@ -1500,6 +1544,7 @@ function renderCart() {
 }
 
 function addToCart(id, selectedVariant) {
+  localStorage.removeItem(cartClearedStorageKey);
   const product = products.find((item) => item.id === id);
   const variant = selectedVariant || productSpec(product);
   const cartId = `${id}::${variant}`;
@@ -2120,6 +2165,7 @@ renderAdminProducts();
 renderCoupons();
 renderOrders();
 calculateShipping(false);
+loadPublicSettings();
 updateAdminAccess();
 if (sessionStorage.getItem(adminTokenKey)) {
   apiRequest("orders", { adminToken: sessionStorage.getItem(adminTokenKey) }, "GET").then((result) => { orders = result.orders; save(orderStorageKey, orders); renderOrders(); loadDashboard(); loadSupportCases(); }).catch(() => {});
