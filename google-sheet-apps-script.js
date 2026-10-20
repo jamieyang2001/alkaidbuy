@@ -2,11 +2,15 @@ const SPREADSHEET_ID = "1-Klx-aoddtkW9z9eTdUT4Yy_LOZ7fgHHK-ifWEkf3-8";
 const ADMIN_PASSWORD = "tophet1003";
 const ORDER_SHEET = "訂單";
 const ITEM_SHEET = "訂單明細";
+const MEMBER_SHEET = "會員";
+const MEMBER_COUPON_SHEET = "會員折價券";
+const MEMBER_SESSION_SHEET = "會員登入";
 
 function doGet(e) {
   const action = String((e.parameter && e.parameter.action) || "health");
   try {
     if (action === "lookup") return json_(lookupOrder_(e.parameter.quoteId));
+    if (action === "memberProfile") return json_({ ok: true, profile: memberProfile_(e.parameter.token) });
     if (action === "orders") {
       requireAdmin_(e.parameter.password);
       return json_({ ok: true, orders: listOrders_() });
@@ -22,6 +26,9 @@ function doPost(e) {
     const data = JSON.parse((e.postData && e.postData.contents) || "{}");
     const action = String(data.action || "create");
     if (action === "create") return json_(createOrder_(data.order || data));
+    if (action === "memberRegister") return json_(memberRegister_(data));
+    if (action === "memberLogin") return json_(memberLogin_(data));
+    if (action === "memberLogout") return json_(memberLogout_(data.token));
     if (action === "updateStatus") {
       requireAdmin_(data.password);
       return json_(updateStatus_(data.quoteId, data.status, data.adminNote));
@@ -37,11 +44,12 @@ function createOrder_(order) {
   const sheet = sheet_(ORDER_SHEET);
   if (findOrderRow_(order.quoteId)) return { ok: true, quoteId: order.quoteId, duplicate: true };
   const now = new Date();
+  const member = order.memberToken ? memberFromToken_(order.memberToken, false) : null;
   sheet.appendRow([
     now, safe_(order.quoteId), safe_(order.type), safe_(order.customer), safe_(order.contact),
     safe_(order.payment), safe_(order.delivery), number_(order.subtotal), number_(order.discount),
     number_(order.shipping), number_(order.total), "待確認", safe_(order.note), safe_(order.message),
-    now, "", "網站", safe_(order.lookupCode)
+    now, "", "網站", member ? member.id : ""
   ]);
   const itemSheet = sheet_(ITEM_SHEET);
   (order.items || []).forEach(function(item) {
@@ -96,6 +104,123 @@ function rowToOrder_(row) {
     total: row[10], status: row[11], note: row[12], message: row[13], updatedAt: dateText_(row[14]),
     adminNote: row[15]
   };
+}
+
+function memberRegister_(data) {
+  const name = String(data.name || "").trim();
+  const email = normalizeEmail_(data.email);
+  const password = String(data.password || "");
+  if (name.length < 2) throw new Error("請輸入姓名");
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error("Email格式不正確");
+  if (password.length < 8) throw new Error("密碼至少需要8個字元");
+  if (findMemberByEmail_(email)) throw new Error("這個Email已經註冊，請直接登入");
+  const id = "M-" + Utilities.getUuid().replace(/-/g, "").slice(0, 12).toUpperCase();
+  const salt = Utilities.getUuid();
+  const now = new Date();
+  sheet_(MEMBER_SHEET).appendRow([id, safe_(name), email, passwordHash_(password, salt), salt, now, now, "啟用", ""]);
+  const token = createMemberSession_(id);
+  return { ok: true, token: token, member: { id: id, name: name, email: email } };
+}
+
+function memberLogin_(data) {
+  const email = normalizeEmail_(data.email);
+  const password = String(data.password || "");
+  const member = findMemberByEmail_(email);
+  if (!member || member.status !== "啟用" || passwordHash_(password, member.salt) !== member.passwordHash) {
+    throw new Error("Email或密碼錯誤");
+  }
+  sheet_(MEMBER_SHEET).getRange(member.row, 7).setValue(new Date());
+  return { ok: true, token: createMemberSession_(member.id), member: { id: member.id, name: member.name, email: member.email } };
+}
+
+function memberLogout_(token) {
+  const found = findSession_(token);
+  if (found) sheet_(MEMBER_SESSION_SHEET).getRange(found.row, 5).setValue("已登出");
+  return { ok: true };
+}
+
+function memberProfile_(token) {
+  const member = memberFromToken_(token, true);
+  const orderSheet = sheet_(ORDER_SHEET);
+  const orders = orderSheet.getLastRow() < 2 ? [] : orderSheet.getRange(2, 1, orderSheet.getLastRow() - 1, 18).getValues()
+    .filter(function(row) { return String(row[17]) === member.id; })
+    .reverse().map(rowToOrder_);
+  const orderIds = {};
+  orders.forEach(function(order) { orderIds[order.quoteId] = order; order.items = []; });
+  const itemSheet = sheet_(ITEM_SHEET);
+  if (itemSheet.getLastRow() >= 2) {
+    itemSheet.getRange(2, 1, itemSheet.getLastRow() - 1, 12).getValues().forEach(function(row) {
+      if (!orderIds[row[0]]) return;
+      orderIds[row[0]].items.push({ id: row[1], name: row[2], variant: row[3], quantity: number_(row[4]), price: number_(row[5]), subtotal: number_(row[6]), weight: number_(row[7]), category: row[8], status: row[9] });
+    });
+  }
+  return { member: { id: member.id, name: member.name, email: member.email }, orders: orders, coupons: memberCoupons_(member) };
+}
+
+function memberCoupons_(member) {
+  const sheet = sheet_(MEMBER_COUPON_SHEET);
+  if (sheet.getLastRow() < 2) return [];
+  const now = new Date();
+  return sheet.getRange(2, 1, sheet.getLastRow() - 1, 10).getValues().filter(function(row) {
+    const ownerMatch = String(row[0]) === member.id || normalizeEmail_(row[1]) === member.email;
+    const validDate = !row[6] || new Date(row[6]) >= new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return ownerMatch && String(row[7] || "啟用") === "啟用" && validDate;
+  }).map(function(row) {
+    return { code: row[2], type: row[3] || "fixed", value: number_(row[4]), minimum: number_(row[5]), expiry: row[6] ? Utilities.formatDate(new Date(row[6]), "Asia/Taipei", "yyyy-MM-dd") : "", active: true };
+  });
+}
+
+function findMemberByEmail_(email) {
+  const sheet = sheet_(MEMBER_SHEET);
+  if (sheet.getLastRow() < 2) return null;
+  const cell = sheet.getRange(2, 3, sheet.getLastRow() - 1, 1).createTextFinder(normalizeEmail_(email)).matchEntireCell(true).findNext();
+  if (!cell) return null;
+  const row = sheet.getRange(cell.getRow(), 1, 1, 9).getValues()[0];
+  return { row: cell.getRow(), id: row[0], name: row[1], email: normalizeEmail_(row[2]), passwordHash: row[3], salt: row[4], status: row[7] };
+}
+
+function createMemberSession_(memberId) {
+  const token = Utilities.getUuid().replace(/-/g, "") + Utilities.getUuid().replace(/-/g, "");
+  const now = new Date();
+  const expires = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  sheet_(MEMBER_SESSION_SHEET).appendRow([token, memberId, now, expires, "啟用"]);
+  return token;
+}
+
+function findSession_(token) {
+  if (!token) return null;
+  const sheet = sheet_(MEMBER_SESSION_SHEET);
+  if (sheet.getLastRow() < 2) return null;
+  const cell = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).createTextFinder(String(token)).matchEntireCell(true).findNext();
+  if (!cell) return null;
+  const row = sheet.getRange(cell.getRow(), 1, 1, 5).getValues()[0];
+  return { row: cell.getRow(), token: row[0], memberId: row[1], expires: row[3], status: row[4] };
+}
+
+function memberFromToken_(token, required) {
+  const session = findSession_(token);
+  if (!session || session.status !== "啟用" || new Date(session.expires) < new Date()) {
+    if (required) throw new Error("會員登入已失效，請重新登入");
+    return null;
+  }
+  const sheet = sheet_(MEMBER_SHEET);
+  const cell = sheet.getRange(2, 1, Math.max(sheet.getLastRow() - 1, 1), 1).createTextFinder(session.memberId).matchEntireCell(true).findNext();
+  if (!cell) {
+    if (required) throw new Error("找不到會員資料");
+    return null;
+  }
+  const row = sheet.getRange(cell.getRow(), 1, 1, 9).getValues()[0];
+  if (String(row[7]) !== "啟用") throw new Error("會員帳號目前無法使用");
+  return { id: row[0], name: row[1], email: normalizeEmail_(row[2]) };
+}
+
+function passwordHash_(password, salt) {
+  const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, salt + "|" + password, Utilities.Charset.UTF_8);
+  return Utilities.base64EncodeWebSafe(bytes);
+}
+
+function normalizeEmail_(email) {
+  return String(email || "").trim().toLowerCase();
 }
 
 function sheet_(name) {

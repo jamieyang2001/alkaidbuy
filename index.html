@@ -19,6 +19,7 @@
         <a href="#special">代訂</a>
         <a href="#shipping">運費</a>
         <a href="#cart">購物車</a>
+        <a href="#member">會員</a>
         <a href="#lookup">查詢</a>
         <a href="#faq">FAQ</a>
         <a href="#admin-login">後台</a>
@@ -75,6 +76,10 @@
             </select>
           </div>
           <div class="product-grid" id="productGrid" aria-live="polite"></div>
+          <div class="product-more" id="productMore" hidden>
+            <span id="productResultCount"></span>
+            <button class="secondary-button" id="loadMoreProducts" type="button">顯示更多商品</button>
+          </div>
         </div>
       </section>
 
@@ -193,6 +198,40 @@
         </div>
       </section>
 
+      <section class="section member-section" id="member">
+        <div class="section-heading">
+          <p class="eyebrow">Member Center</p>
+          <h2>會員中心</h2>
+          <p>註冊後可查看自己的訂單明細、歷史紀錄與會員專屬折價券。</p>
+        </div>
+        <div class="member-auth" id="memberAuth">
+          <form class="request-form" id="memberRegisterForm">
+            <div class="full"><p class="eyebrow">Register</p><h3>申請會員</h3></div>
+            <label>姓名<input id="memberRegisterName" type="text" autocomplete="name" required /></label>
+            <label>Email<input id="memberRegisterEmail" type="email" autocomplete="email" required /></label>
+            <label class="full">密碼<input id="memberRegisterPassword" type="password" minlength="8" autocomplete="new-password" required /></label>
+            <button class="primary-button form-submit" type="submit">建立會員帳號</button>
+          </form>
+          <form class="request-form" id="memberLoginForm">
+            <div class="full"><p class="eyebrow">Login</p><h3>會員登入</h3></div>
+            <label class="full">Email<input id="memberLoginEmail" type="email" autocomplete="email" required /></label>
+            <label class="full">密碼<input id="memberLoginPassword" type="password" autocomplete="current-password" required /></label>
+            <button class="primary-button form-submit" type="submit">登入會員中心</button>
+          </form>
+        </div>
+        <p class="member-message" id="memberMessage" role="status"></p>
+        <div class="member-dashboard" id="memberDashboard" hidden>
+          <div class="member-toolbar">
+            <div><p class="eyebrow">My Account</p><h3 id="memberWelcome">會員您好</h3><p id="memberEmail"></p></div>
+            <button class="secondary-button" id="memberLogout" type="button">登出</button>
+          </div>
+          <div class="member-columns">
+            <section><h3>我的折價券</h3><div id="memberCouponList" class="member-coupon-list"></div></section>
+            <section><h3>訂單與購物明細</h3><div id="memberOrderList" class="member-order-list"></div></section>
+          </div>
+        </div>
+      </section>
+
       <section class="section lookup-section" id="lookup">
         <div class="section-heading">
           <p class="eyebrow">Order Lookup</p>
@@ -254,7 +293,7 @@
           <form class="request-form admin-form" id="adminForm">
             <input id="editingProductId" type="hidden" />
             <label>商品名稱<input id="adminName" type="text" placeholder="例：限定零食組" required /></label>
-            <label>店家分類<select id="adminCategory" required><option value="matsukiyo">松本清</option><option value="muji">無印良品</option><option value="loft">LOFT</option><option value="bic">BIC CAMERA</option><option value="yodobashi">友都八喜</option><option value="donki">唐吉軻德零食</option><option value="threecoins">3COINS</option><option value="seven">7-11 餅乾糖果</option></select></label>
+            <label>店家分類<select id="adminCategory" required><option value="matsukiyo">松本清</option><option value="muji">無印良品</option><option value="loft">LOFT</option><option value="yodobashi">友都八喜</option><option value="threecoins">3COINS</option><option value="seven">7-11 餅乾糖果</option></select></label>
             <label>細分類<input id="adminSubcategory" type="text" placeholder="例：藥妝、美妝、零食" /></label>
             <label>官網價格 日幣<input id="adminPrice" type="number" min="1" step="1" placeholder="680" required /></label>
             <label>重量 g<input id="adminWeight" type="number" min="1" step="1" placeholder="300" required /></label>
