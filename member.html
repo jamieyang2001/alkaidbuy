@@ -37,7 +37,13 @@
         <p class="member-message" id="memberMessage" role="status"></p>
         <div class="member-dashboard" id="memberDashboard" hidden>
           <div class="member-toolbar"><div><p class="eyebrow">My Account</p><h2 id="memberWelcome">會員您好</h2><p id="memberEmail"></p></div><div class="member-actions"><a class="primary-button" href="cart.html">前往購物車</a><button class="secondary-button" id="memberLogout" type="button">登出</button></div></div>
-          <div class="member-columns"><section><h2>我的折價券</h2><div id="memberCouponList" class="member-coupon-list"></div></section><section><h2>訂單與購物明細</h2><div id="memberOrderList" class="member-order-list"></div></section></div>
+          <div class="member-stats" id="memberStats"></div>
+          <div class="member-tabs" role="tablist"><button class="active" type="button" data-member-tab="orders">訂單</button><button type="button" data-member-tab="favorites">收藏</button><button type="button" data-member-tab="recent">最近瀏覽</button><button type="button" data-member-tab="coupons">折價券</button><button type="button" data-member-tab="addresses">地址簿</button></div>
+          <div class="member-tab-panel" data-member-panel="orders"><h2>訂單與購物明細</h2><div id="memberOrderList" class="member-order-list"></div></div>
+          <div class="member-tab-panel" data-member-panel="favorites" hidden><h2>我的收藏與通知</h2><div id="memberFavoriteList" class="saved-product-list"></div></div>
+          <div class="member-tab-panel" data-member-panel="recent" hidden><h2>最近瀏覽</h2><div id="memberRecentList" class="saved-product-list"></div></div>
+          <div class="member-tab-panel" data-member-panel="coupons" hidden><h2>我的折價券</h2><div id="memberCouponList" class="member-coupon-list"></div></div>
+          <div class="member-tab-panel" data-member-panel="addresses" hidden><h2>地址簿</h2><form class="request-form address-form" id="addressForm"><input id="addressId" type="hidden" /><label>收件人<input id="addressName" required /></label><label>電話<input id="addressPhone" type="tel" required /></label><label>地址<input id="addressText" required /></label><label>超商門市<input id="addressStore" placeholder="選填" /></label><button class="primary-button form-submit" type="submit">儲存地址</button></form><div id="memberAddressList" class="address-list"></div></div>
         </div>
       </section>
     </main>

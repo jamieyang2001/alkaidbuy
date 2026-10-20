@@ -4,6 +4,11 @@ const SESSION_KEY = "yaoguang-member-session";
 const COUPON_KEY = "yaoguang-coupons";
 const SETTINGS_KEY = "yaoguang-fee-settings";
 const ORDER_KEY = "yaoguang-orders";
+const FAVORITE_KEY = "yaoguang-favorites";
+const RECENT_KEY = "yaoguang-recent";
+const SNAPSHOT_KEY = "yaoguang-product-snapshots";
+const ADDRESS_KEY = "yaoguang-addresses";
+const NOTICE_KEY = "yaoguang-product-notices";
 const CONTACT_EMAIL = "alkaidbuy@gmail.com";
 const LINE_URL = "https://lin.ee/NxJLmwO";
 const SHIPPING = {
@@ -40,19 +45,70 @@ function apiRequest(action, payload = {}, method = "POST") {
 
 function currentSession() { return load(SESSION_KEY, null); }
 
+function productSnapshots() { return load(SNAPSHOT_KEY, {}); }
+function productList(ids) { const snapshots = productSnapshots(); return (ids || []).map((id) => snapshots[id]).filter(Boolean); }
+function addProductsToCart(items) {
+  items.forEach((product) => {
+    const variant = product.selectedVariant || product.variant || product.spec || "標準款";
+    const cartId = `${product.id}::${variant}`;
+    const existing = cart.find((item) => item.cartId === cartId);
+    if (existing) existing.quantity += Number(product.quantity || 1);
+    else cart.push({ ...product, cartId, selectedVariant: variant, quantity: Number(product.quantity || 1) });
+  });
+  save(CART_KEY, cart);
+}
+
+function statusTimeline(status) {
+  const statuses = ["待確認", "已報價", "待付款", "已付款", "日本採購中", "已到倉", "已寄出", "已完成"];
+  const normalized = status === "採購中" ? "日本採購中" : status === "已到日本倉" ? "已到倉" : status;
+  const active = statuses.indexOf(normalized);
+  return `<ol class="order-timeline">${statuses.map((item, index) => `<li class="${index <= active ? "done" : ""} ${index === active ? "current" : ""}"><span></span>${item}</li>`).join("")}</ol>`;
+}
+
+function savedProductCards(items, favoriteMode) {
+  const notices = load(NOTICE_KEY, {});
+  return items.length ? items.map((product) => `<article class="saved-product"><img src="${escapeHtml(product.image || "")}" alt="" /><div><strong>${escapeHtml(product.name)}</strong><span>${money(product.price)}・${escapeHtml(product.spec || "標準款")}</span>${favoriteMode ? `<div class="notice-options"><label><input type="checkbox" data-notice="stock" data-id="${product.id}" ${notices[product.id]?.stock ? "checked" : ""} /> 有貨通知</label><label><input type="checkbox" data-notice="price" data-id="${product.id}" ${notices[product.id]?.price ? "checked" : ""} /> 降價通知</label></div>` : ""}</div><div class="saved-product-actions"><a class="secondary-button" href="index.html?product=${encodeURIComponent(product.id)}#products">查看</a><button class="primary-button" type="button" data-buy-id="${product.id}">加入購物車</button></div></article>`).join("") : '<p class="empty-cart">目前沒有商品紀錄。</p>';
+}
+
 function renderMemberProfile(profile) {
   $("#memberAuth").hidden = true;
   $("#memberDashboard").hidden = false;
   $("#memberWelcome").textContent = `${profile.member.name}，您好`;
   $("#memberEmail").textContent = profile.member.email;
+  const cloudData = profile.data || {};
+  if (cloudData.favorites?.length) save(FAVORITE_KEY, cloudData.favorites);
+  if (cloudData.recent?.length) save(RECENT_KEY, cloudData.recent);
+  if (cloudData.addresses?.length) save(ADDRESS_KEY, cloudData.addresses);
+  if (cloudData.cart?.length && !load(CART_KEY, []).length) save(CART_KEY, cloudData.cart);
+  if (cloudData.snapshots && Object.keys(cloudData.snapshots).length) save(SNAPSHOT_KEY, { ...load(SNAPSHOT_KEY, {}), ...cloudData.snapshots });
   const coupons = profile.coupons || [];
   $("#memberCouponList").innerHTML = coupons.length ? coupons.map((coupon) => `
     <article class="member-coupon"><strong>${escapeHtml(coupon.code)}</strong><span>${coupon.type === "percent" ? `${coupon.value}%` : money(coupon.value)}・滿 ${money(coupon.minimum)}・${escapeHtml(coupon.expiry || "無期限")}</span></article>`).join("") : '<p class="empty-cart">目前沒有可使用的會員折價券。</p>';
   const orders = profile.orders || [];
-  $("#memberOrderList").innerHTML = orders.length ? orders.map((order) => `
-    <article class="member-order"><strong>${escapeHtml(order.quoteId)}・${escapeHtml(order.status)}</strong><span>${escapeHtml(order.createdAt)}・${money(order.total || 0)}</span>
-      <details><summary>查看購物明細</summary>${(order.items || []).map((item) => `<div class="member-order-item"><span>${escapeHtml(item.name)}・${escapeHtml(item.variant)} × ${item.quantity}</span><strong>${money(item.subtotal)}</strong></div>`).join("") || "<p>這筆詢問沒有固定商品明細。</p>"}${order.adminNote ? `<p>店家備註：${escapeHtml(order.adminNote)}</p>` : ""}</details>
+  const spent = orders.filter((order) => order.status !== "已取消").reduce((sum, order) => sum + Number(order.total || 0), 0);
+  const tier = spent >= 20000 ? "VIP" : spent >= 5000 ? "常客" : "一般會員";
+  const points = Math.floor(spent / 100);
+  $("#memberStats").innerHTML = `<div><span>會員等級</span><strong>${tier}</strong></div><div><span>累積消費</span><strong>${money(spent)}</strong></div><div><span>瑤光點數</span><strong>${points.toLocaleString("zh-TW")} 點</strong></div>`;
+  $("#memberOrderList").innerHTML = orders.length ? orders.map((order, orderIndex) => `
+    <article class="member-order"><header><div><strong>${escapeHtml(order.quoteId)}</strong><span>${escapeHtml(order.createdAt)}・${money(order.total || 0)}</span></div><span class="lookup-status">${escapeHtml(order.status)}</span></header>${statusTimeline(order.status)}<p class="order-updated">最後更新：${escapeHtml(order.updatedAt || order.createdAt)}${order.trackingNumber ? `・物流單號：${escapeHtml(order.trackingNumber)}` : ""}</p>
+      <details><summary>查看購物明細</summary>${(order.items || []).map((item) => `<div class="member-order-item"><span>${escapeHtml(item.name)}・${escapeHtml(item.variant)} × ${item.quantity}</span><strong>${money(item.subtotal)}</strong></div>`).join("") || "<p>這筆詢問沒有固定商品明細。</p>"}${order.adminNote ? `<p>店家備註：${escapeHtml(order.adminNote)}</p>` : ""}</details>${order.items?.length ? `<button class="secondary-button reorder-button" type="button" data-order-index="${orderIndex}">再次購買</button>` : ""}
     </article>`).join("") : '<p class="empty-cart">目前還沒有會員訂單。</p>';
+  $("#memberFavoriteList").innerHTML = savedProductCards(productList(load(FAVORITE_KEY, [])), true);
+  $("#memberRecentList").innerHTML = savedProductCards(productList(load(RECENT_KEY, [])), false);
+  renderAddresses();
+  window.memberOrders = orders;
+  syncMemberData();
+}
+
+function renderAddresses() {
+  const addresses = load(ADDRESS_KEY, []);
+  $("#memberAddressList").innerHTML = addresses.length ? addresses.map((address) => `<article class="address-card"><div><strong>${escapeHtml(address.name)}</strong><span>${escapeHtml(address.phone)}</span><p>${escapeHtml(address.address || address.store)}</p></div><button class="secondary-button" type="button" data-delete-address="${address.id}">刪除</button></article>`).join("") : '<p class="empty-cart">尚未建立常用地址。</p>';
+}
+
+function syncMemberData() {
+  const token = currentSession()?.token;
+  if (!token) return;
+  apiRequest("memberDataSave", { token, favorites: load(FAVORITE_KEY, []), recent: load(RECENT_KEY, []), addresses: load(ADDRESS_KEY, []), notices: load(NOTICE_KEY, {}), cart: load(CART_KEY, []), snapshots: load(SNAPSHOT_KEY, {}) }).catch(() => {});
 }
 
 function showLoggedOut(message = "") {
@@ -104,6 +160,37 @@ async function initMemberPage() {
     if (token) apiRequest("memberLogout", { token }).catch(() => {});
     showLoggedOut("已登出會員中心。");
   });
+  document.querySelector(".member-tabs").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-member-tab]");
+    if (!button) return;
+    document.querySelectorAll("[data-member-tab]").forEach((item) => item.classList.toggle("active", item === button));
+    document.querySelectorAll("[data-member-panel]").forEach((panel) => { panel.hidden = panel.dataset.memberPanel !== button.dataset.memberTab; });
+  });
+  $("#addressForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const addresses = load(ADDRESS_KEY, []);
+    addresses.push({ id: crypto.randomUUID(), name: $("#addressName").value.trim(), phone: $("#addressPhone").value.trim(), address: $("#addressText").value.trim(), store: $("#addressStore").value.trim() });
+    save(ADDRESS_KEY, addresses);
+    event.currentTarget.reset();
+    renderAddresses();
+    syncMemberData();
+  });
+  $("#memberDashboard").addEventListener("click", (event) => {
+    const deleteButton = event.target.closest("[data-delete-address]");
+    if (deleteButton) { save(ADDRESS_KEY, load(ADDRESS_KEY, []).filter((item) => item.id !== deleteButton.dataset.deleteAddress)); renderAddresses(); syncMemberData(); return; }
+    const buyButton = event.target.closest("[data-buy-id]");
+    if (buyButton) { const product = productSnapshots()[buyButton.dataset.buyId]; if (product) { addProductsToCart([product]); location.href = "cart.html"; } return; }
+    const reorder = event.target.closest("[data-order-index]");
+    if (reorder) { addProductsToCart(window.memberOrders[Number(reorder.dataset.orderIndex)].items || []); location.href = "cart.html"; }
+  });
+  $("#memberDashboard").addEventListener("change", (event) => {
+    const input = event.target.closest("[data-notice]");
+    if (!input) return;
+    const notices = load(NOTICE_KEY, {});
+    notices[input.dataset.id] = { ...(notices[input.dataset.id] || {}), [input.dataset.notice]: input.checked };
+    save(NOTICE_KEY, notices);
+    syncMemberData();
+  });
 }
 
 let cart = load(CART_KEY, []);
@@ -119,7 +206,8 @@ function couponDiscount(subtotal) {
 }
 function cartEstimate() {
   const settings = load(SETTINGS_KEY, { method: "ems", rate: 0.205, extra: 0 });
-  const method = SHIPPING[settings.method] ? settings.method : "ems";
+  const selectedMethod = $("#checkoutShippingMethod")?.value;
+  const method = SHIPPING[selectedMethod] ? selectedMethod : SHIPPING[settings.method] ? settings.method : "ems";
   const weight = cart.reduce((sum, item) => sum + Number(item.weight || 0) * Number(item.quantity || 0), 0);
   const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
   const yen = weight ? shippingRate(method, weight) : 0;
@@ -140,6 +228,7 @@ function renderCart() {
   $("#cartDiscount").textContent = `-${money(estimate.discount)}`;
   $("#cartShipping").textContent = estimate.outOfRange ? "需另詢" : money(estimate.shipping);
   $("#cartTotal").textContent = estimate.outOfRange ? "需另詢" : money(estimate.total);
+  if (currentSession()?.token) syncMemberData();
 }
 
 function applyCoupon() {
@@ -181,6 +270,7 @@ async function initCartPage() {
     try {
       const result = await apiRequest("memberProfile", { token: session.token }, "GET");
       memberCoupons = result.profile.coupons || [];
+      if (result.profile.data?.addresses?.length) save(ADDRESS_KEY, result.profile.data.addresses);
       $("#orderName").value = result.profile.member.name || "";
       $("#orderContact").value = result.profile.member.email || "";
       $("#memberCheckoutHint").innerHTML = `已登入 <strong>${escapeHtml(result.profile.member.name)}</strong>，此訂單會存入會員紀錄。`;
@@ -188,6 +278,36 @@ async function initCartPage() {
   } else {
     $("#memberCheckoutHint").innerHTML = '尚未登入，<a href="member.html">登入會員</a>後下單可保留歷史紀錄。';
   }
+  const addresses = load(ADDRESS_KEY, []);
+  $("#savedAddress").innerHTML = '<option value="">自行填寫</option>' + addresses.map((address) => `<option value="${address.id}">${escapeHtml(address.name)}・${escapeHtml(address.address || address.store)}</option>`).join("");
+  $("#savedAddress").addEventListener("change", () => {
+    const address = addresses.find((item) => item.id === $("#savedAddress").value);
+    if (!address) return;
+    $("#orderName").value = address.name;
+    $("#orderContact").value = address.phone;
+    $("#deliveryAddress").value = address.address || address.store;
+  });
+  let checkoutStage = 1;
+  function showCheckoutStage(stage) {
+    checkoutStage = stage;
+    document.querySelectorAll("[data-checkout-stage]").forEach((panel) => { panel.hidden = Number(panel.dataset.checkoutStage) !== stage; });
+    document.querySelectorAll("#checkoutSteps li").forEach((item, index) => { item.classList.toggle("active", index < stage); item.classList.toggle("current", index === stage - 1); });
+    $("#checkoutBack").hidden = stage === 1;
+    $("#checkoutNext").hidden = stage === 4;
+    $("#submitOrder").hidden = stage !== 4;
+    if (stage === 4) {
+      const estimate = cartEstimate();
+      $("#checkoutReview").innerHTML = `<div class="review-summary"><div><span>商品小計</span><strong>${money(estimate.subtotal)}</strong></div><div><span>折價券</span><strong>-${money(estimate.discount)}</strong></div><div><span>${estimate.methodLabel}</span><strong>${estimate.outOfRange ? "需另詢" : money(estimate.shipping)}</strong></div><div class="total"><span>預估應付</span><strong>${estimate.outOfRange ? "需另詢" : money(estimate.total)}</strong></div></div>`;
+    }
+  }
+  $("#checkoutNext").addEventListener("click", () => {
+    if (!cart.length) return showSummary("購物車目前是空的，請先加入商品。");
+    if (checkoutStage === 2 && (!$("#orderName").value.trim() || !$("#orderContact").value.trim())) { $("#orderName").reportValidity(); return; }
+    showCheckoutStage(Math.min(4, checkoutStage + 1));
+  });
+  $("#checkoutBack").addEventListener("click", () => showCheckoutStage(Math.max(1, checkoutStage - 1)));
+  $("#checkoutShippingMethod").addEventListener("change", renderCart);
+  showCheckoutStage(1);
   renderCart();
   $("#cartItems").addEventListener("click", (event) => {
     const button = event.target.closest("button[data-action]");
@@ -208,7 +328,7 @@ async function initCartPage() {
     button.disabled = true;
     button.textContent = "訂單送出中...";
     const id = quoteId();
-    const form = { name: $("#orderName").value.trim(), contact: $("#orderContact").value.trim(), payment: $("#paymentMethod").value, delivery: $("#deliveryMethod").value, note: $("#orderNote").value.trim() };
+    const form = { name: $("#orderName").value.trim(), contact: $("#orderContact").value.trim(), payment: $("#paymentMethod").value, delivery: `${$("#deliveryMethod").value}／${$("#deliveryAddress").value.trim() || "未填地址"}`, note: $("#orderNote").value.trim() };
     const estimate = cartEstimate();
     const message = orderMessage(form, id, estimate);
     const order = { quoteId: id, type: "固定商品", customer: form.name, contact: form.contact, payment: form.payment, delivery: form.delivery, note: form.note, message, subtotal: estimate.subtotal, discount: estimate.discount, shipping: estimate.shipping, total: estimate.total, coupon: activeCoupon?.code || "", memberToken: currentSession()?.token || "", items: cart.map((item) => ({ id: item.id, name: item.name, variant: item.selectedVariant, quantity: item.quantity, price: item.price, weight: item.weight, category: item.category, status: item.status, sourceUrl: item.sourceUrl, image: item.image })) };
@@ -220,6 +340,8 @@ async function initCartPage() {
       cart = [];
       save(CART_KEY, cart);
       renderCart();
+      showCheckoutStage(4);
+      document.querySelectorAll("#checkoutSteps li").forEach((item) => item.classList.add("active"));
       showSummary(`${message}\n\n已成功送出訂單。請保存訂單編號，可在網站查詢進度。`);
       event.currentTarget.reset();
     } catch (error) { showSummary(`${message}\n\n注意：${error.message}。請點下方 LINE 按鈕把訂單傳給客服。`); }

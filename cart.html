@@ -23,6 +23,7 @@
         <h1>購物車與結帳</h1>
         <p>確認商品規格、數量與預估運費後送出訂單。</p>
       </section>
+      <ol class="checkout-steps" id="checkoutSteps"><li class="active">購物車</li><li>聯絡資料</li><li>寄送方式</li><li>金額確認</li><li>完成</li></ol>
       <section class="section cart-section subpage-section">
         <div class="checkout-layout">
           <div class="cart-panel">
@@ -40,12 +41,11 @@
           </div>
           <form class="request-form checkout-form" id="checkoutForm">
             <div class="full"><p class="eyebrow">Order</p><h2>收件與付款資料</h2><p class="form-note" id="memberCheckoutHint"></p></div>
-            <label>姓名<input id="orderName" type="text" autocomplete="name" required /></label>
-            <label>聯絡方式<input id="orderContact" type="text" placeholder="LINE ID / IG / Email" required /></label>
-            <label>付款方式<select id="paymentMethod" required><option value="銀行轉帳">銀行轉帳</option><option value="LINE Pay">LINE Pay</option><option value="到店付款">到店付款</option></select></label>
-            <label>取貨方式<select id="deliveryMethod" required><option value="宅配">宅配</option><option value="超商取貨">超商取貨</option><option value="面交">面交</option></select></label>
-            <label class="full">備註<textarea id="orderNote" rows="4" placeholder="地址、希望到貨時間或其他備註"></textarea></label>
-            <button class="primary-button form-submit" id="submitOrder" type="submit">確認並送出訂單</button>
+            <div class="checkout-stage full" data-checkout-stage="1"><p>確認左側商品與數量後繼續。</p></div>
+            <div class="checkout-stage full" data-checkout-stage="2" hidden><label>姓名<input id="orderName" type="text" autocomplete="name" required /></label><label>聯絡方式<input id="orderContact" type="text" placeholder="LINE ID / IG / Email" required /></label><label>使用地址簿<select id="savedAddress"><option value="">自行填寫</option></select></label><label>收件地址／門市<input id="deliveryAddress" placeholder="宅配地址或超商門市" /></label></div>
+            <div class="checkout-stage full" data-checkout-stage="3" hidden><label>付款方式<select id="paymentMethod" required><option value="銀行轉帳">銀行轉帳</option><option value="LINE Pay">LINE Pay</option><option value="到店付款">到店付款</option></select></label><label>取貨方式<select id="deliveryMethod" required><option value="宅配">宅配</option><option value="超商取貨">超商取貨</option><option value="面交">面交</option></select></label><label>國際寄送<select id="checkoutShippingMethod"><option value="ems">EMS 國際快捷</option><option value="smallPacketAir">小形包裝物 航空</option></select></label></div>
+            <div class="checkout-stage full" data-checkout-stage="4" hidden><div id="checkoutReview"></div><label>備註<textarea id="orderNote" rows="4" placeholder="希望到貨時間或其他備註"></textarea></label></div>
+            <div class="checkout-navigation full"><button class="secondary-button" id="checkoutBack" type="button" hidden>上一步</button><button class="primary-button" id="checkoutNext" type="button">下一步</button><button class="primary-button" id="submitOrder" type="submit" hidden>確認並送出訂單</button></div>
           </form>
         </div>
       </section>

@@ -1036,6 +1036,9 @@ const couponStorageKey = "yaoguang-coupons";
 const cartStorageKey = "yaoguang-cart-v1";
 const adminAuthKey = "yaoguang-admin-auth";
 const memberSessionKey = "yaoguang-member-session";
+const favoriteStorageKey = "yaoguang-favorites";
+const recentStorageKey = "yaoguang-recent";
+const productSnapshotKey = "yaoguang-product-snapshots";
 const adminPassword = "tophet1003";
 const lineOfficialUrl = "https://lin.ee/NxJLmwO";
 const contactEmail = "alkaidbuy@gmail.com";
@@ -1054,7 +1057,7 @@ const fixedProductRate = 0.205;
 const $ = (id) => document.querySelector(id);
 const els = {
   categoryGrid: $("#categoryGrid"), categoryView: $("#categoryView"), categoryTitle: $("#categoryTitle"), backToCategories: $("#backToCategories"),
-  productSearch: $("#productSearch"), productSubcategory: $("#productSubcategory"), productSort: $("#productSort"), productGrid: $("#productGrid"),
+  productSearch: $("#productSearch"), productSubcategory: $("#productSubcategory"), productStatus: $("#productStatus"), productSpecFilter: $("#productSpecFilter"), productMinPrice: $("#productMinPrice"), productMaxPrice: $("#productMaxPrice"), productSort: $("#productSort"), productGrid: $("#productGrid"), searchSuggestions: $("#searchSuggestions"),
   productMore: $("#productMore"), productResultCount: $("#productResultCount"), loadMoreProducts: $("#loadMoreProducts"),
   cartItems: $("#cartItems"), cartWeight: $("#cartWeight"), cartSubtotal: $("#cartSubtotal"), cartDiscount: $("#cartDiscount"), cartShipping: $("#cartShipping"), cartTotal: $("#cartTotal"), couponCode: $("#couponCode"), applyCoupon: $("#applyCoupon"), couponMessage: $("#couponMessage"),
   summaryPanel: $("#summaryPanel"), summaryText: $("#summaryText"), summaryLineButton: $("#summaryLineButton"), emailNotifyButton: $("#emailNotifyButton"), copyButton: $("#copyButton"),
@@ -1069,6 +1072,7 @@ const els = {
   adminLoginForm: $("#adminLoginForm"), adminPassword: $("#adminPassword"), adminLoginMessage: $("#adminLoginMessage"), adminSection: $("#admin"), adminLogout: $("#adminLogout"),
   lookupForm: $("#lookupForm"), lookupQuoteId: $("#lookupQuoteId"), lookupResult: $("#lookupResult"),
   memberAuth: $("#memberAuth"), memberRegisterForm: $("#memberRegisterForm"), memberLoginForm: $("#memberLoginForm"), memberMessage: $("#memberMessage"), memberDashboard: $("#memberDashboard"), memberWelcome: $("#memberWelcome"), memberEmail: $("#memberEmail"), memberCouponList: $("#memberCouponList"), memberOrderList: $("#memberOrderList"), memberLogout: $("#memberLogout"),
+  productDialog: $("#productDialog"), productDetail: $("#productDetail"), closeProductDialog: $("#closeProductDialog"), cartDock: $("#cartDock"), cartDockCount: $("#cartDockCount"), cartDockTotal: $("#cartDockTotal"),
 };
 
 let products = load(productStorageKey, defaultProducts);
@@ -1079,6 +1083,8 @@ let activeCategory = null;
 let activeCoupon = null;
 let memberSession = load(memberSessionKey, null);
 let memberCoupons = [];
+let favorites = load(favoriteStorageKey, []);
+let recentProducts = load(recentStorageKey, []);
 let productLimit = 60;
 
 function load(key, fallback) {
@@ -1351,7 +1357,18 @@ function renderProducts() {
   const subcategory = els.productSubcategory.value;
   if (subcategory) list = list.filter((product) => productSubcategory(product) === subcategory);
   if (keyword) list = list.filter((product) => `${product.name} ${product.description} ${productSubcategory(product)} ${productSpec(product)} ${productVariants(product).join(" ")}`.toLowerCase().includes(keyword));
+  const status = els.productStatus.value;
+  if (status === "可代購") list = list.filter((product) => product.status === "可代購");
+  if (status === "需確認") list = list.filter((product) => /需|詢價|預購/.test(product.status));
+  if (status === "可寄送") list = list.filter((product) => product.status !== "售完" && !/限制|不可寄/.test(`${product.status} ${product.description}`));
+  const specKeyword = els.productSpecFilter.value.trim().toLowerCase();
+  if (specKeyword) list = list.filter((product) => `${productSpec(product)} ${productVariants(product).join(" ")}`.toLowerCase().includes(specKeyword));
+  const minPrice = Number(els.productMinPrice.value) || 0;
+  const maxPrice = Number(els.productMaxPrice.value) || Infinity;
+  list = list.filter((product) => { const price = productListedPrice(product); return price !== null && price >= minPrice && price <= maxPrice; });
   const sort = els.productSort.value;
+  if (sort === "popular") list.sort((a, b) => Number(/眼藥水|UHA|DHC|面膜|零食/.test(`${b.name} ${b.description}`)) - Number(/眼藥水|UHA|DHC|面膜|零食/.test(`${a.name} ${a.description}`)));
+  if (sort === "newest") list.reverse();
   if (sort === "priceAsc") list.sort((a, b) => (productListedPrice(a) ?? Infinity) - (productListedPrice(b) ?? Infinity));
   if (sort === "priceDesc") list.sort((a, b) => (productListedPrice(b) ?? 0) - (productListedPrice(a) ?? 0));
   if (sort === "weightAsc") list.sort((a, b) => a.weight - b.weight);
@@ -1359,12 +1376,13 @@ function renderProducts() {
 
   const visible = list.slice(0, productLimit);
   els.productGrid.innerHTML = visible.length ? visible.map((product) => `
-    <article class="product-card">
-      <img src="${product.image}" alt="${product.name}" />
+    <article class="product-card" data-product-id="${product.id}">
+      <button class="favorite-button ${favorites.includes(product.id) ? "active" : ""}" type="button" data-favorite-id="${product.id}" aria-label="${favorites.includes(product.id) ? "取消收藏" : "加入收藏"}">♥</button>
+      <button class="product-detail-trigger" type="button" data-detail-id="${product.id}"><img src="${product.image}" alt="${product.name}" /></button>
       <div class="product-body">
         <span class="tag">${categoryLabel(product.category)}</span>
         <span class="status-pill" data-status="${product.status}">${product.status}</span>
-        <h3>${product.name}</h3>
+        <button class="product-title-button" type="button" data-detail-id="${product.id}"><h3>${product.name}</h3></button>
         <p>${product.description}</p>
         <div class="product-meta"><span>${productSubcategory(product)}</span><span>${productSpec(product)}</span></div>
         ${productVariants(product).length > 1 ? `<label class="variant-picker">規格<select data-variant-for="${product.id}">${productVariants(product).map((variant) => `<option>${variant}</option>`).join("")}</select></label>` : ""}
@@ -1377,6 +1395,45 @@ function renderProducts() {
     </article>`).join("") : '<p class="empty-cart">這個分類目前沒有符合條件的商品。</p>';
   els.productMore.hidden = list.length <= visible.length;
   els.productResultCount.textContent = `已顯示 ${visible.length} / ${list.length} 件`;
+}
+
+function syncMemberData() {
+  if (!memberSession?.token) return;
+  apiRequest("memberDataSave", { token: memberSession.token, favorites, recent: recentProducts.slice(0, 30), cart, snapshots: load(productSnapshotKey, {}) }).catch(() => {});
+}
+
+function toggleFavorite(id) {
+  const product = products.find((item) => item.id === id);
+  const snapshots = load(productSnapshotKey, {});
+  if (product) snapshots[id] = { ...product, price: productListedPrice(product) };
+  save(productSnapshotKey, snapshots);
+  favorites = favorites.includes(id) ? favorites.filter((item) => item !== id) : [id, ...favorites];
+  save(favoriteStorageKey, favorites);
+  syncMemberData();
+  renderProducts();
+}
+
+function openProductDetail(id) {
+  const product = products.find((item) => item.id === id);
+  if (!product) return;
+  const snapshots = load(productSnapshotKey, {});
+  snapshots[id] = { ...product, price: productListedPrice(product) };
+  save(productSnapshotKey, snapshots);
+  recentProducts = [id, ...recentProducts.filter((item) => item !== id)].slice(0, 30);
+  save(recentStorageKey, recentProducts);
+  syncMemberData();
+  const variants = productVariants(product);
+  els.productDetail.innerHTML = `<div class="product-detail-layout"><div class="product-detail-image"><img src="${product.image}" alt="${escapeHtml(product.name)}" /></div><div><span class="tag">${categoryLabel(product.category)}・${productSubcategory(product)}</span><h2>${escapeHtml(product.name)}</h2><p>${escapeHtml(product.description)}</p><dl class="product-facts"><div><dt>日本官網價格</dt><dd>${productOfficialYen(product) ? yen(productOfficialYen(product)) : "依官網"}</dd></div><div><dt>代購單價</dt><dd>${productDisplayPrice(product)}</dd></div><div><dt>預估重量</dt><dd>${product.weight.toLocaleString("zh-TW")}g</dd></div><div><dt>規格／容量</dt><dd>${escapeHtml(productSpec(product))}</dd></div><div><dt>寄送狀態</dt><dd>${escapeHtml(product.status)}</dd></div><div><dt>價格計算</dt><dd>日幣 × 0.205 ＋ 固定加價</dd></div></dl>${variants.length > 1 ? `<label>選擇規格<select id="detailVariant">${variants.map((variant) => `<option>${escapeHtml(variant)}</option>`).join("")}</select></label>` : ""}<div class="detail-actions"><button class="primary-button" type="button" data-detail-cart="${product.id}">加入購物車</button><button class="secondary-button" type="button" data-favorite-id="${product.id}">${favorites.includes(product.id) ? "取消收藏" : "加入收藏"}</button>${product.sourceUrl ? `<a class="secondary-button" href="${product.sourceUrl}" target="_blank" rel="noopener noreferrer">查看日本官網</a>` : ""}</div><p class="shipping-warning">藥品、液體、電池或航空限制商品會於接單後再次確認寄送方式。</p></div></div>`;
+  history.replaceState(null, "", `${location.pathname}?product=${encodeURIComponent(id)}#products`);
+  els.productDialog.showModal();
+}
+
+function renderSearchSuggestions() {
+  const keyword = els.productSearch.value.trim().toLowerCase();
+  if (!keyword) { els.searchSuggestions.hidden = true; return; }
+  const matches = products.filter((product) => `${product.name} ${productSubcategory(product)}`.toLowerCase().includes(keyword)).slice(0, 6);
+  els.searchSuggestions.innerHTML = matches.map((product) => `<button type="button" data-suggestion-id="${product.id}"><img src="${product.image}" alt="" /><span><strong>${escapeHtml(product.name)}</strong><small>${categoryLabel(product.category)}・${productSubcategory(product)}</small></span></button>`).join("") || "<p>沒有符合的搜尋建議</p>";
+  els.searchSuggestions.hidden = false;
 }
 
 function renderCart() {
@@ -1397,6 +1454,10 @@ function renderCart() {
   els.cartDiscount.textContent = `-${money(estimate.discount)}`;
   els.cartShipping.textContent = estimate.outOfRange ? "需另詢" : money(estimate.shippingTwd);
   els.cartTotal.textContent = estimate.outOfRange || estimate.quoteOnly ? "需另詢" : money(estimate.total);
+  const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  els.cartDockCount.textContent = itemCount;
+  els.cartDockTotal.textContent = money(estimate.subtotal);
+  els.cartDock.classList.toggle("has-items", itemCount > 0);
 }
 
 function addToCart(id, selectedVariant) {
@@ -1411,6 +1472,7 @@ function addToCart(id, selectedVariant) {
     cart.push({ ...product, cartId, selectedVariant: variant, price, yenPrice: productOfficialYen(product), quantity: 1 });
   }
   renderCart();
+  syncMemberData();
 }
 
 function calculateShipping(showMessage = false) {
@@ -1545,6 +1607,7 @@ function renderOrders() {
         <div><h3>${order.quoteId} / ${order.type}</h3><p>${order.customer || "未填姓名"}・${order.contact || "未填聯絡方式"}・${order.createdAt}</p></div>
         <select data-index="${index}" aria-label="訂單狀態">${statuses.map((status) => `<option value="${status}" ${order.status === status ? "selected" : ""}>${status}</option>`).join("")}</select>
       </header>
+      <div class="order-admin-fields"><label>物流單號<input data-tracking-index="${index}" value="${escapeHtml(order.trackingNumber || "")}" placeholder="寄出後填寫" /></label><label>店家備註<input data-note-index="${index}" value="${escapeHtml(order.adminNote || "")}" placeholder="顯示給會員" /></label><button class="secondary-button" type="button" data-save-order="${index}">儲存進度</button></div>
       <textarea readonly>${order.message}</textarea>
     </article>`).join("");
 }
@@ -1605,8 +1668,12 @@ function resetProductResults() {
   renderProducts();
 }
 
-els.productSearch.addEventListener("input", resetProductResults);
+els.productSearch.addEventListener("input", () => { resetProductResults(); renderSearchSuggestions(); });
 els.productSubcategory.addEventListener("change", resetProductResults);
+els.productStatus.addEventListener("change", resetProductResults);
+els.productSpecFilter.addEventListener("input", resetProductResults);
+els.productMinPrice.addEventListener("input", resetProductResults);
+els.productMaxPrice.addEventListener("input", resetProductResults);
 els.productSort.addEventListener("change", resetProductResults);
 els.loadMoreProducts.addEventListener("click", () => {
   productLimit += 60;
@@ -1614,6 +1681,10 @@ els.loadMoreProducts.addEventListener("click", () => {
 });
 
 els.productGrid.addEventListener("click", (event) => {
+  const favorite = event.target.closest("[data-favorite-id]");
+  if (favorite) { toggleFavorite(favorite.dataset.favoriteId); return; }
+  const detail = event.target.closest("[data-detail-id]");
+  if (detail) { openProductDetail(detail.dataset.detailId); return; }
   const button = event.target.closest(".cart-button");
   if (!button) return;
   const selected = els.productGrid.querySelector(`[data-variant-for="${button.dataset.id}"]`)?.value;
@@ -1631,6 +1702,28 @@ els.cartItems.addEventListener("click", (event) => {
   if (button.dataset.action === "decrease") item.quantity -= 1;
   if (button.dataset.action === "remove" || item.quantity <= 0) cart = cart.filter((cartItem) => cartItem.cartId !== item.cartId);
   renderCart();
+});
+
+document.querySelector(".hot-searches").addEventListener("click", (event) => {
+  const button = event.target.closest("button");
+  if (!button) return;
+  els.productSearch.value = button.textContent;
+  resetProductResults();
+  renderSearchSuggestions();
+});
+els.searchSuggestions.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-suggestion-id]");
+  if (!button) return;
+  els.searchSuggestions.hidden = true;
+  openProductDetail(button.dataset.suggestionId);
+});
+els.closeProductDialog.addEventListener("click", () => els.productDialog.close());
+els.productDialog.addEventListener("click", (event) => { if (event.target === els.productDialog) els.productDialog.close(); });
+els.productDetail.addEventListener("click", (event) => {
+  const favorite = event.target.closest("[data-favorite-id]");
+  if (favorite) { toggleFavorite(favorite.dataset.favoriteId); openProductDetail(favorite.dataset.favoriteId); return; }
+  const cartButton = event.target.closest("[data-detail-cart]");
+  if (cartButton) { addToCart(cartButton.dataset.detailCart, $("#detailVariant")?.value); cartButton.textContent = "已加入購物車"; syncMemberData(); }
 });
 
 els.applyCoupon.addEventListener("click", applyCouponCode);
@@ -1794,6 +1887,19 @@ els.orderList.addEventListener("change", async (event) => {
     showSummary(`訂單狀態只更新在這台瀏覽器，尚未同步到試算表：${error.message}`);
   }
 });
+els.orderList.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-save-order]");
+  if (!button) return;
+  const index = Number(button.dataset.saveOrder);
+  const card = button.closest(".order-card");
+  orders[index].trackingNumber = card.querySelector("[data-tracking-index]").value.trim();
+  orders[index].adminNote = card.querySelector("[data-note-index]").value.trim();
+  save(orderStorageKey, orders);
+  try {
+    await apiRequest("updateStatus", { quoteId: orders[index].quoteId, status: orders[index].status, adminNote: orders[index].adminNote, trackingNumber: orders[index].trackingNumber, password: adminPassword });
+    button.textContent = "已儲存";
+  } catch (error) { showSummary(`進度尚未同步：${error.message}`); }
+});
 
 els.exportOrders.addEventListener("click", exportOrdersCsv);
 els.clearOrders.addEventListener("click", () => {
@@ -1889,3 +1995,5 @@ renderOrders();
 calculateShipping(false);
 updateAdminAccess();
 loadMemberProfile();
+const initialProductId = new URLSearchParams(location.search).get("product");
+if (initialProductId && products.some((product) => product.id === initialProductId)) openProductDetail(initialProductId);

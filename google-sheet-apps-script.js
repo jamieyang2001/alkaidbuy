@@ -5,6 +5,7 @@ const ITEM_SHEET = "訂單明細";
 const MEMBER_SHEET = "會員";
 const MEMBER_COUPON_SHEET = "會員折價券";
 const MEMBER_SESSION_SHEET = "會員登入";
+const MEMBER_DATA_SHEET = "會員資料";
 
 function doGet(e) {
   const action = String((e.parameter && e.parameter.action) || "health");
@@ -29,9 +30,10 @@ function doPost(e) {
     if (action === "memberRegister") return json_(memberRegister_(data));
     if (action === "memberLogin") return json_(memberLogin_(data));
     if (action === "memberLogout") return json_(memberLogout_(data.token));
+    if (action === "memberDataSave") return json_(memberDataSave_(data));
     if (action === "updateStatus") {
       requireAdmin_(data.password);
-      return json_(updateStatus_(data.quoteId, data.status, data.adminNote));
+      return json_(updateStatus_(data.quoteId, data.status, data.adminNote, data.trackingNumber));
     }
     throw new Error("不支援的操作");
   } catch (error) {
@@ -73,10 +75,10 @@ function lookupOrder_(quoteId) {
 function listOrders_() {
   const sheet = sheet_(ORDER_SHEET);
   if (sheet.getLastRow() < 2) return [];
-  return sheet.getRange(2, 1, sheet.getLastRow() - 1, 18).getValues().reverse().map(rowToOrder_);
+  return sheet.getRange(2, 1, sheet.getLastRow() - 1, 19).getValues().reverse().map(rowToOrder_);
 }
 
-function updateStatus_(quoteId, status, adminNote) {
+function updateStatus_(quoteId, status, adminNote, trackingNumber) {
   const allowed = ["待確認", "已報價", "待付款", "已付款", "採購中", "已到日本倉", "已寄出", "已完成", "已取消"];
   if (allowed.indexOf(status) < 0) throw new Error("訂單狀態不正確");
   const found = findOrderRow_(quoteId);
@@ -85,6 +87,7 @@ function updateStatus_(quoteId, status, adminNote) {
   sheet.getRange(found.row, 12).setValue(status);
   sheet.getRange(found.row, 15).setValue(new Date());
   if (adminNote !== undefined) sheet.getRange(found.row, 16).setValue(safe_(adminNote));
+  if (trackingNumber !== undefined) sheet.getRange(found.row, 19).setValue(safe_(trackingNumber));
   return { ok: true, quoteId: quoteId, status: status };
 }
 
@@ -94,7 +97,7 @@ function findOrderRow_(quoteId) {
   const finder = sheet.getRange(2, 2, sheet.getLastRow() - 1, 1)
     .createTextFinder(String(quoteId || "").trim().toUpperCase()).matchEntireCell(true).findNext();
   if (!finder) return null;
-  return { row: finder.getRow(), values: sheet.getRange(finder.getRow(), 1, 1, 18).getValues()[0] };
+  return { row: finder.getRow(), values: sheet.getRange(finder.getRow(), 1, 1, 19).getValues()[0] };
 }
 
 function rowToOrder_(row) {
@@ -102,7 +105,7 @@ function rowToOrder_(row) {
     createdAt: dateText_(row[0]), quoteId: row[1], type: row[2], customer: row[3], contact: row[4],
     payment: row[5], delivery: row[6], subtotal: row[7], discount: row[8], shipping: row[9],
     total: row[10], status: row[11], note: row[12], message: row[13], updatedAt: dateText_(row[14]),
-    adminNote: row[15]
+    adminNote: row[15], trackingNumber: row[18]
   };
 }
 
@@ -142,7 +145,7 @@ function memberLogout_(token) {
 function memberProfile_(token) {
   const member = memberFromToken_(token, true);
   const orderSheet = sheet_(ORDER_SHEET);
-  const orders = orderSheet.getLastRow() < 2 ? [] : orderSheet.getRange(2, 1, orderSheet.getLastRow() - 1, 18).getValues()
+  const orders = orderSheet.getLastRow() < 2 ? [] : orderSheet.getRange(2, 1, orderSheet.getLastRow() - 1, 19).getValues()
     .filter(function(row) { return String(row[17]) === member.id; })
     .reverse().map(rowToOrder_);
   const orderIds = {};
@@ -154,7 +157,37 @@ function memberProfile_(token) {
       orderIds[row[0]].items.push({ id: row[1], name: row[2], variant: row[3], quantity: number_(row[4]), price: number_(row[5]), subtotal: number_(row[6]), weight: number_(row[7]), category: row[8], status: row[9] });
     });
   }
-  return { member: { id: member.id, name: member.name, email: member.email }, orders: orders, coupons: memberCoupons_(member) };
+  return { member: { id: member.id, name: member.name, email: member.email }, orders: orders, coupons: memberCoupons_(member), data: memberData_(member.id) };
+}
+
+function memberDataSave_(data) {
+  const member = memberFromToken_(data.token, true);
+  const sheet = ensureSheet_(MEMBER_DATA_SHEET, ["會員ID", "收藏", "最近瀏覽", "地址簿", "通知設定", "購物車", "更新時間", "商品快照"]);
+  const values = [member.id, JSON.stringify(data.favorites || []), JSON.stringify(data.recent || []), JSON.stringify(data.addresses || []), JSON.stringify(data.notices || {}), JSON.stringify(data.cart || []), new Date(), JSON.stringify(data.snapshots || {})];
+  const cell = sheet.getLastRow() < 2 ? null : sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).createTextFinder(member.id).matchEntireCell(true).findNext();
+  if (cell) sheet.getRange(cell.getRow(), 1, 1, values.length).setValues([values]);
+  else sheet.appendRow(values);
+  return { ok: true };
+}
+
+function memberData_(memberId) {
+  const sheet = ensureSheet_(MEMBER_DATA_SHEET, ["會員ID", "收藏", "最近瀏覽", "地址簿", "通知設定", "購物車", "更新時間", "商品快照"]);
+  if (sheet.getLastRow() < 2) return {};
+  const cell = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).createTextFinder(memberId).matchEntireCell(true).findNext();
+  if (!cell) return {};
+  const row = sheet.getRange(cell.getRow(), 1, 1, 8).getValues()[0];
+  return { favorites: parseJson_(row[1], []), recent: parseJson_(row[2], []), addresses: parseJson_(row[3], []), notices: parseJson_(row[4], {}), cart: parseJson_(row[5], []), snapshots: parseJson_(row[7], {}) };
+}
+
+function parseJson_(value, fallback) {
+  try { return value ? JSON.parse(String(value)) : fallback; } catch (error) { return fallback; }
+}
+
+function ensureSheet_(name, headers) {
+  const book = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = book.getSheetByName(name);
+  if (!sheet) { sheet = book.insertSheet(name); sheet.appendRow(headers); sheet.setFrozenRows(1); }
+  return sheet;
 }
 
 function memberCoupons_(member) {

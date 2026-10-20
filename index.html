@@ -65,16 +65,24 @@
             </div>
           </div>
           <div class="product-tools">
-            <input id="productSearch" type="search" placeholder="搜尋商品名稱、型號、容量或說明" />
+            <div class="search-wrap">
+              <input id="productSearch" type="search" placeholder="搜尋商品名稱、型號、容量或說明" autocomplete="off" />
+              <div class="search-suggestions" id="searchSuggestions" hidden></div>
+            </div>
             <select id="productSubcategory"><option value="">全部細分類</option></select>
+            <select id="productStatus"><option value="">全部狀態</option><option value="可代購">可直接代購</option><option value="需確認">需確認</option><option value="可寄送">只顯示可寄送</option></select>
+            <input id="productSpecFilter" type="search" placeholder="容量／規格，例如 30mL" />
+            <label class="price-filter">價格 <input id="productMinPrice" type="number" min="0" step="50" placeholder="最低" /><span>–</span><input id="productMaxPrice" type="number" min="0" step="50" placeholder="最高" /></label>
             <select id="productSort">
-              <option value="default">預設排序</option>
+              <option value="popular">熱門排序</option>
+              <option value="newest">最新上架</option>
               <option value="priceAsc">價格由低到高</option>
               <option value="priceDesc">價格由高到低</option>
               <option value="weightAsc">重量由輕到重</option>
               <option value="status">依商品狀態</option>
             </select>
           </div>
+          <div class="hot-searches" aria-label="熱門搜尋"><span>熱門：</span><button type="button">眼藥水</button><button type="button">UHA</button><button type="button">DHC</button><button type="button">面膜</button><button type="button">無印零食</button></div>
           <div class="product-grid" id="productGrid" aria-live="polite"></div>
           <div class="product-more" id="productMore" hidden>
             <span id="productResultCount"></span>
@@ -197,6 +205,11 @@
           <a class="line-button" id="summaryLineButton" href="https://lin.ee/NxJLmwO" target="_blank" rel="noreferrer">用 LINE 送出</a>
         </div>
       </section>
+
+      <dialog class="product-dialog" id="productDialog">
+        <button class="dialog-close" id="closeProductDialog" type="button" aria-label="關閉">×</button>
+        <div id="productDetail"></div>
+      </dialog>
 
       <section class="section member-section" id="member" hidden>
         <div class="section-heading">
@@ -347,6 +360,8 @@
       <a href="cart.html">購物車</a>
       <a href="https://lin.ee/NxJLmwO" target="_blank" rel="noreferrer">LINE</a>
     </nav>
+
+    <a class="cart-dock" id="cartDock" href="cart.html"><span>購物車 <strong id="cartDockCount">0</strong> 件</span><strong id="cartDockTotal">NT$0</strong></a>
 
     <a class="floating-line" href="https://lin.ee/NxJLmwO" target="_blank" rel="noreferrer" aria-label="用 LINE 聯絡">LINE</a>
 
