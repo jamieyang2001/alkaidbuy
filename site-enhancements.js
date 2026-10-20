@@ -1,5 +1,6 @@
 (function () {
   const LANGUAGE_KEY = "yaoguang-language";
+  const ERROR_API = "https://script.google.com/macros/s/AKfycbzpjqqe6NV_xusYI0mkrV3W9HtXsgQg-b-9vwNm4YvJ7tZij-Us80JtAm4MgCalAKFy/exec";
   const translations = {
     en: {
       "商品": "Products", "代訂": "Requests", "運費": "Shipping", "購物車": "Cart", "會員": "Account", "查詢": "Order lookup", "後台": "Admin",
@@ -61,6 +62,14 @@
     link.textContent = "隱私權與服務條款";
     footer.appendChild(link);
   });
+  document.querySelectorAll("form").forEach((form) => {
+    const field = document.createElement("label");
+    field.className = "website-check";
+    field.setAttribute("aria-hidden", "true");
+    field.innerHTML = '<span>Website</span><input name="website" tabindex="-1" autocomplete="off" />';
+    form.appendChild(field);
+    form.addEventListener("submit", (event) => { if (field.querySelector("input").value) { event.preventDefault(); event.stopImmediatePropagation(); } }, true);
+  });
   const analytics = document.createElement("script");
   analytics.defer = true;
   analytics.src = "/_vercel/insights/script.js";
@@ -77,4 +86,11 @@
     clearTimeout(translationTimer);
     translationTimer = setTimeout(() => applyLanguage(localStorage.getItem(LANGUAGE_KEY) || "zh-TW"), 30);
   }).observe(document.body, { childList: true, subtree: true });
+  const errorSession = sessionStorage.getItem("yaoguang-error-session") || crypto.randomUUID();
+  sessionStorage.setItem("yaoguang-error-session", errorSession);
+  function reportError(message, source, line) {
+    fetch(ERROR_API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "logError", session: errorSession, page: location.href, message: String(message).slice(0, 500), source: String(source || "").slice(0, 300), line: Number(line || 0), userAgent: navigator.userAgent.slice(0, 500) }) }).catch(() => {});
+  }
+  window.addEventListener("error", (event) => reportError(event.message, event.filename, event.lineno));
+  window.addEventListener("unhandledrejection", (event) => reportError(event.reason?.message || event.reason || "Unhandled promise rejection", "promise", 0));
 })();

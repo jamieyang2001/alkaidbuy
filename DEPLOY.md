@@ -16,7 +16,7 @@
 正式試算表：[瑤光代購訂單](https://docs.google.com/spreadsheets/d/1-Klx-aoddtkW9z9eTdUT4Yy_LOZ7fgHHK-ifWEkf3-8/edit)
 
 1. 開啟正式試算表，到「擴充功能」→「Apps Script」。
-2. 將 `google-sheet-apps-script.js` 的全部內容貼到 `程式碼.gs`，取代舊內容並儲存。
+2. 將 `google-sheet-apps-script-v4.js` 的全部內容貼到 `程式碼.gs`，取代舊內容並儲存。
 3. 點右上角「部署」→「新增部署作業」。
 4. 類型選「網頁應用程式」，執行身分選「我」，存取權選「任何人」。
 5. 點「部署」，完成 Google 授權後複製結尾是 `/exec` 的網址。
@@ -26,7 +26,7 @@
 
 ## 更新既有 Apps Script 部署
 
-當 `google-sheet-apps-script.js` 更新時：
+當 `google-sheet-apps-script-v4.js` 更新時：
 
 1. 將最新檔案內容貼到 Apps Script 的 `程式碼.gs` 並儲存。
 2. 點「部署」→「管理部署作業」。
@@ -35,19 +35,22 @@
 
 會員資料使用「會員」、「會員登入」與「會員折價券」分頁。密碼只儲存加鹽雜湊，不保存明碼；會員登入權杖有效期為 30 天。
 
-## 目前資料限制
+## 商品雲端與每日備份
 
-商品與收費設定仍會在瀏覽器保留一份快取。正式訂單以 Google Sheet 為主，瀏覽器也保留備份：
+部署 V4 後，登入網站後台：
 
-- Google API 正常時，新增、查詢與狀態更新均跨裝置同步。
-- API 暫時失敗時，網站會要求客人改用 LINE 送出，避免漏單。
-- 商品後台修改目前只影響操作中的瀏覽器；正式商品清單更新後仍需提交至 GitHub。
+- 第一次按「首次同步全部商品」，建立雲端商品資料。
+- 後續新增、編輯與刪除商品會同步至 Google Sheet。
+- 按「啟用每日備份」，授權 Google Drive 後每天備份試算表，保留最近 30 份。
 
 ## 通知方式
 
-目前通知使用前端可用的方式：
+V4 會自動寄送訂單進度、售後案件、補貨與降價 Email，並將結果寫入「Email紀錄」分頁。
 
-- LINE 按鈕會帶入訂單文字
-- Email 按鈕會用後台設定的通知信箱開啟 mailto
+## 測試環境
 
-如果要做到真正自動發送通知，需要後端 API 或第三方表單服務。
+功能修改請建立 GitHub 分支並推送，Vercel 會自動產生 Preview Deployment。確認 Preview 正常後再合併到 `main`，正式網站才會更新。
+
+## Search Console
+
+網站已提供 `/sitemap.xml` 與 `/robots.txt`。在 Google Search Console 新增網址前置字元資源後，使用 HTML 標記驗證，並提交 `https://alkaidbuy.vercel.app/sitemap.xml`。

@@ -1073,6 +1073,7 @@ const els = {
   lookupForm: $("#lookupForm"), lookupQuoteId: $("#lookupQuoteId"), lookupResult: $("#lookupResult"),
   memberAuth: $("#memberAuth"), memberRegisterForm: $("#memberRegisterForm"), memberLoginForm: $("#memberLoginForm"), memberMessage: $("#memberMessage"), memberDashboard: $("#memberDashboard"), memberWelcome: $("#memberWelcome"), memberEmail: $("#memberEmail"), memberCouponList: $("#memberCouponList"), memberOrderList: $("#memberOrderList"), memberLogout: $("#memberLogout"),
   productDialog: $("#productDialog"), productDetail: $("#productDetail"), closeProductDialog: $("#closeProductDialog"), cartDock: $("#cartDock"), cartDockCount: $("#cartDockCount"), cartDockTotal: $("#cartDockTotal"),
+  dashboardStats: $("#dashboardStats"), refreshDashboard: $("#refreshDashboard"), syncCatalog: $("#syncCatalog"), enableBackup: $("#enableBackup"), operationsMessage: $("#operationsMessage"),
 };
 
 let products = load(productStorageKey, defaultProducts);
@@ -1271,6 +1272,29 @@ async function apiRequest(action, payload = {}, method = "POST") {
   return result;
 }
 
+async function loadCloudCatalog() {
+  try {
+    const result = await apiRequest("catalog", {}, "GET");
+    if (!result.products?.length) return;
+    products = result.products;
+    save(productStorageKey, products);
+    renderCategories();
+    if (activeCategory) renderProducts();
+  } catch (error) { console.warn("Cloud catalog unavailable", error); }
+}
+
+async function loadDashboard() {
+  const token = localStorage.getItem(adminTokenKey);
+  if (!token) return;
+  els.operationsMessage.textContent = "報表載入中...";
+  try {
+    const result = await apiRequest("dashboard", { adminToken: token }, "GET");
+    const data = result.dashboard;
+    els.dashboardStats.innerHTML = `<div><span>今日訂單</span><strong>${data.todayOrders}</strong></div><div><span>累積營業額</span><strong>${money(data.revenue)}</strong></div><div><span>雲端商品</span><strong>${data.products}</strong></div><div><span>缺貨商品</span><strong>${data.outOfStock}</strong></div><div><span>未處理售後</span><strong>${data.pendingSupport}</strong></div>`;
+    els.operationsMessage.textContent = "報表已更新。";
+  } catch (error) { els.operationsMessage.textContent = error.message; }
+}
+
 function renderMemberProfile(profile) {
   memberCoupons = profile.coupons || [];
   els.memberAuth.hidden = true;
@@ -1330,7 +1354,7 @@ function renderCategories() {
   els.categoryGrid.innerHTML = categories.map((category) => {
     const count = products.filter((product) => product.category === category.id).length;
     return `<button class="category-card" type="button" data-category="${category.id}">
-      <img src="${category.image}" alt="${category.label}" />
+      <img src="${category.image}" alt="${category.label}" loading="lazy" decoding="async" />
       <span class="tag">${count} 件商品</span>
       <h3>${category.label}</h3>
       <p>${category.description}</p>
@@ -1378,7 +1402,7 @@ function renderProducts() {
   els.productGrid.innerHTML = visible.length ? visible.map((product) => `
     <article class="product-card" data-product-id="${product.id}">
       <button class="favorite-button ${favorites.includes(product.id) ? "active" : ""}" type="button" data-favorite-id="${product.id}" aria-label="${favorites.includes(product.id) ? "取消收藏" : "加入收藏"}">♥</button>
-      <button class="product-detail-trigger" type="button" data-detail-id="${product.id}"><img src="${product.image}" alt="${product.name}" /></button>
+      <button class="product-detail-trigger" type="button" data-detail-id="${product.id}"><img src="${product.image}" alt="${product.name}" loading="lazy" decoding="async" /></button>
       <div class="product-body">
         <span class="tag">${categoryLabel(product.category)}</span>
         <span class="status-pill" data-status="${product.status}">${product.status}</span>
@@ -1808,6 +1832,7 @@ els.adminForm.addEventListener("submit", (event) => {
   if (index >= 0) products[index] = product;
   else products.push(product);
   const adminToken = localStorage.getItem(adminTokenKey);
+  if (adminToken) apiRequest("catalogUpsert", { adminToken, product }).catch((error) => { els.operationsMessage.textContent = `雲端商品同步失敗：${error.message}`; });
   if (adminToken) apiRequest("productNotify", { adminToken, product, previous }).catch(() => {});
   save(productStorageKey, products);
   resetProductForm();
@@ -1859,6 +1884,8 @@ els.adminProductList.addEventListener("click", (event) => {
     els.adminForm.scrollIntoView({ behavior: "smooth", block: "start" });
   }
   if (button.dataset.action === "delete-product") {
+    const adminToken = localStorage.getItem(adminTokenKey);
+    if (adminToken) apiRequest("catalogDelete", { adminToken, productId: product.id }).catch(() => {});
     products = products.filter((item) => item.id !== product.id);
     cart = cart.filter((item) => item.id !== product.id);
     save(productStorageKey, products);
@@ -1968,6 +1995,7 @@ els.adminLoginForm.addEventListener("submit", async (event) => {
       save(orderStorageKey, orders);
       renderOrders();
       els.adminLoginMessage.textContent = `已登入後台，載入 ${orders.length} 筆雲端訂單。`;
+      loadDashboard();
     } catch (error) {
       els.adminLoginMessage.textContent = `已登入；雲端訂單尚未連線：${error.message}`;
     }
@@ -1982,6 +2010,19 @@ els.adminLogout.addEventListener("click", () => {
   localStorage.removeItem(adminTokenKey);
   updateAdminAccess();
   document.querySelector("#admin-login").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+els.refreshDashboard.addEventListener("click", loadDashboard);
+els.syncCatalog.addEventListener("click", async () => {
+  const token = localStorage.getItem(adminTokenKey);
+  if (!token) return;
+  els.operationsMessage.textContent = `正在同步 ${products.length} 件商品，請勿關閉頁面...`;
+  try { const result = await apiRequest("catalogSeed", { adminToken: token, products }); els.operationsMessage.textContent = `已同步 ${result.count} 件商品到雲端。`; loadDashboard(); }
+  catch (error) { els.operationsMessage.textContent = `同步失敗：${error.message}`; }
+});
+els.enableBackup.addEventListener("click", async () => {
+  try { const result = await apiRequest("installMaintenance", { adminToken: localStorage.getItem(adminTokenKey) }); els.operationsMessage.textContent = result.message; }
+  catch (error) { els.operationsMessage.textContent = error.message; }
 });
 
 els.copyButton.addEventListener("click", async () => {
@@ -2002,5 +2043,6 @@ renderOrders();
 calculateShipping(false);
 updateAdminAccess();
 loadMemberProfile();
+loadCloudCatalog();
 const initialProductId = new URLSearchParams(location.search).get("product");
 if (initialProductId && products.some((product) => product.id === initialProductId)) openProductDetail(initialProductId);
