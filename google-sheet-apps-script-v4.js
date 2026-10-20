@@ -227,7 +227,7 @@ function findMemberById_(id) {
 }
 
 function adminLogin_(password) {
-  rateLimit_("admin-login", 8, 900);
+  rateLimit_("admin-login", 30, 900);
   requireAdmin_(password);
   const token = Utilities.getUuid().replace(/-/g, "") + Utilities.getUuid().replace(/-/g, "");
   const expires = new Date(Date.now() + 6 * 60 * 60 * 1000);
