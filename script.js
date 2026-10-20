@@ -1068,7 +1068,7 @@ const els = {
   adminName: $("#adminName"), adminCategory: $("#adminCategory"), adminSubcategory: $("#adminSubcategory"), adminPrice: $("#adminPrice"), adminWeight: $("#adminWeight"), adminStock: $("#adminStock"), adminSpec: $("#adminSpec"), adminVariants: $("#adminVariants"), adminStatus: $("#adminStatus"), adminImage: $("#adminImage"), adminDescription: $("#adminDescription"), adminProductList: $("#adminProductList"),
   couponForm: $("#couponForm"), adminCouponCode: $("#adminCouponCode"), adminCouponType: $("#adminCouponType"), adminCouponValue: $("#adminCouponValue"), adminCouponMinimum: $("#adminCouponMinimum"), adminCouponExpiry: $("#adminCouponExpiry"), adminCouponActive: $("#adminCouponActive"), couponAdminList: $("#couponAdminList"),
   settingsForm: $("#settingsForm"), settingShippingMethod: $("#settingShippingMethod"), settingYenRate: $("#settingYenRate"), settingServicePercent: $("#settingServicePercent"), settingMinimumFee: $("#settingMinimumFee"), settingExtraFee: $("#settingExtraFee"), settingNotifyEmail: $("#settingNotifyEmail"), settingSheetUrl: $("#settingSheetUrl"),
-  orderList: $("#orderList"), exportOrders: $("#exportOrders"), clearOrders: $("#clearOrders"), supportAdminList: $("#supportAdminList"), refreshSupport: $("#refreshSupport"),
+  orderList: $("#orderList"), exportOrders: $("#exportOrders"), clearOrders: $("#clearOrders"), supportAdminList: $("#supportAdminList"), refreshSupport: $("#refreshSupport"), formatSpreadsheet: $("#formatSpreadsheet"),
   adminLoginForm: $("#adminLoginForm"), adminPassword: $("#adminPassword"), adminLoginMessage: $("#adminLoginMessage"), adminSection: $("#admin"), adminLogout: $("#adminLogout"),
   lookupForm: $("#lookupForm"), lookupQuoteId: $("#lookupQuoteId"), lookupResult: $("#lookupResult"),
   memberAuth: $("#memberAuth"), memberRegisterForm: $("#memberRegisterForm"), memberLoginForm: $("#memberLoginForm"), memberMessage: $("#memberMessage"), memberDashboard: $("#memberDashboard"), memberWelcome: $("#memberWelcome"), memberEmail: $("#memberEmail"), memberCouponList: $("#memberCouponList"), memberOrderList: $("#memberOrderList"), memberLogout: $("#memberLogout"),
@@ -1113,8 +1113,8 @@ function categoryLabel(id) {
   return categories.find((category) => category.id === id)?.label || "商品";
 }
 
-function lineUrl(message) {
-  return `https://line.me/R/msg/text/?${encodeURIComponent(message)}`;
+function lineUrl() {
+  return lineOfficialUrl;
 }
 
 function emailUrl(message) {
@@ -1284,7 +1284,7 @@ async function loadCloudCatalog() {
 }
 
 async function loadDashboard() {
-  const token = localStorage.getItem(adminTokenKey);
+  const token = sessionStorage.getItem(adminTokenKey);
   if (!token) return;
   els.operationsMessage.textContent = "報表載入中...";
   try {
@@ -1641,7 +1641,7 @@ function renderOrders() {
 async function loadSupportCases() {
   if (!els.supportAdminList) return;
   try {
-    const result = await apiRequest("supportCases", { adminToken: localStorage.getItem(adminTokenKey) }, "GET");
+    const result = await apiRequest("supportCases", { adminToken: sessionStorage.getItem(adminTokenKey) }, "GET");
     const cases = result.cases || [];
     els.supportAdminList.innerHTML = cases.length ? cases.map((item) => `<article class="order-card"><header><div><h3>${escapeHtml(item.id)} / ${escapeHtml(item.type)}</h3><p>${escapeHtml(item.email)}・訂單 ${escapeHtml(item.quoteId || "未指定")}・${escapeHtml(item.createdAt)}</p></div><select data-support-status="${escapeHtml(item.id)}">${["待處理", "處理中", "等待客人回覆", "已完成", "已拒絕"].map((status) => `<option ${item.status === status ? "selected" : ""}>${status}</option>`).join("")}</select></header><p>${escapeHtml(item.details)}</p>${item.attachment ? `<a href="${escapeHtml(item.attachment)}" target="_blank" rel="noreferrer">查看附件</a>` : ""}<div class="order-admin-fields"><label>客服回覆<input data-support-reply="${escapeHtml(item.id)}" value="${escapeHtml(item.reply || "")}" /></label><button class="secondary-button" data-save-support="${escapeHtml(item.id)}" type="button">儲存並通知客人</button></div></article>`).join("") : '<p class="empty-cart">目前沒有售後案件。</p>';
   } catch (error) { els.supportAdminList.innerHTML = `<p class="empty-cart">載入失敗：${escapeHtml(error.message)}</p>`; }
@@ -1680,7 +1680,7 @@ function exportOrdersCsv() {
 }
 
 function updateAdminAccess() {
-  const isAuthed = Boolean(localStorage.getItem(adminTokenKey));
+  const isAuthed = Boolean(sessionStorage.getItem(adminTokenKey));
   els.adminSection.hidden = !isAuthed;
   if (isAuthed) {
     els.adminLoginMessage.textContent = "已登入後台。";
@@ -1841,7 +1841,7 @@ els.adminForm.addEventListener("submit", (event) => {
   const index = products.findIndex((item) => item.id === id);
   if (index >= 0) products[index] = product;
   else products.push(product);
-  const adminToken = localStorage.getItem(adminTokenKey);
+  const adminToken = sessionStorage.getItem(adminTokenKey);
   if (adminToken) apiRequest("catalogUpsert", { adminToken, product }).catch((error) => { els.operationsMessage.textContent = `雲端商品同步失敗：${error.message}`; });
   if (adminToken) apiRequest("productNotify", { adminToken, product, previous }).catch(() => {});
   save(productStorageKey, products);
@@ -1894,7 +1894,7 @@ els.adminProductList.addEventListener("click", (event) => {
     els.adminForm.scrollIntoView({ behavior: "smooth", block: "start" });
   }
   if (button.dataset.action === "delete-product") {
-    const adminToken = localStorage.getItem(adminTokenKey);
+    const adminToken = sessionStorage.getItem(adminTokenKey);
     if (adminToken) apiRequest("catalogDelete", { adminToken, productId: product.id }).catch(() => {});
     products = products.filter((item) => item.id !== product.id);
     cart = cart.filter((item) => item.id !== product.id);
@@ -1924,7 +1924,7 @@ els.orderList.addEventListener("change", async (event) => {
   orders[Number(select.dataset.index)].status = select.value;
   save(orderStorageKey, orders);
   try {
-    await apiRequest("updateStatus", { quoteId: orders[Number(select.dataset.index)].quoteId, status: select.value, adminToken: localStorage.getItem(adminTokenKey) });
+    await apiRequest("updateStatus", { quoteId: orders[Number(select.dataset.index)].quoteId, status: select.value, adminToken: sessionStorage.getItem(adminTokenKey) });
   } catch (error) {
     showSummary(`訂單狀態只更新在這台瀏覽器，尚未同步到試算表：${error.message}`);
   }
@@ -1942,8 +1942,8 @@ els.orderList.addEventListener("click", async (event) => {
   orders[index].paymentStatus = card.querySelector("[data-payment-index]").value;
   save(orderStorageKey, orders);
   try {
-    await apiRequest("updateStatus", { quoteId: orders[index].quoteId, status: orders[index].status, adminNote: orders[index].adminNote, trackingNumber: orders[index].trackingNumber, adminToken: localStorage.getItem(adminTokenKey) });
-    await apiRequest("updateFulfillment", { quoteId: orders[index].quoteId, actualWeight: orders[index].actualWeight, actualShipping: orders[index].actualShipping, balanceDue: orders[index].balanceDue, paymentStatus: orders[index].paymentStatus, adminToken: localStorage.getItem(adminTokenKey) });
+    await apiRequest("updateStatus", { quoteId: orders[index].quoteId, status: orders[index].status, adminNote: orders[index].adminNote, trackingNumber: orders[index].trackingNumber, adminToken: sessionStorage.getItem(adminTokenKey) });
+    await apiRequest("updateFulfillment", { quoteId: orders[index].quoteId, actualWeight: orders[index].actualWeight, actualShipping: orders[index].actualShipping, balanceDue: orders[index].balanceDue, paymentStatus: orders[index].paymentStatus, adminToken: sessionStorage.getItem(adminTokenKey) });
     button.textContent = "已儲存";
   } catch (error) { showSummary(`進度尚未同步：${error.message}`); }
 });
@@ -1955,7 +1955,7 @@ els.supportAdminList?.addEventListener("click", async (event) => {
   const id = button.dataset.saveSupport;
   const card = button.closest(".order-card");
   try {
-    await apiRequest("supportUpdate", { adminToken: localStorage.getItem(adminTokenKey), supportId: id, status: card.querySelector("[data-support-status]").value, reply: card.querySelector("[data-support-reply]").value.trim() });
+    await apiRequest("supportUpdate", { adminToken: sessionStorage.getItem(adminTokenKey), supportId: id, status: card.querySelector("[data-support-status]").value, reply: card.querySelector("[data-support-reply]").value.trim() });
     button.textContent = "已儲存並通知";
   } catch (error) { showSummary(`售後案件未更新：${error.message}`); }
 });
@@ -2013,7 +2013,8 @@ els.adminLoginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   try {
     const login = await apiRequest("adminLogin", { password: els.adminPassword.value });
-    localStorage.setItem(adminTokenKey, login.adminToken);
+    localStorage.removeItem(adminTokenKey);
+    sessionStorage.setItem(adminTokenKey, login.adminToken);
     els.adminPassword.value = "";
     updateAdminAccess();
     try {
@@ -2032,24 +2033,29 @@ els.adminLoginForm.addEventListener("submit", async (event) => {
 });
 
 els.adminLogout.addEventListener("click", () => {
-  const token = localStorage.getItem(adminTokenKey);
+  const token = sessionStorage.getItem(adminTokenKey);
   if (token) apiRequest("adminLogout", { adminToken: token }).catch(() => {});
   localStorage.removeItem(adminAuthKey);
-  localStorage.removeItem(adminTokenKey);
+  sessionStorage.removeItem(adminTokenKey);
   updateAdminAccess();
   document.querySelector("#admin-login").scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
 els.refreshDashboard.addEventListener("click", loadDashboard);
+els.formatSpreadsheet.addEventListener("click", async () => {
+  els.operationsMessage.textContent = "正在整理試算表格式...";
+  try { const result = await apiRequest("formatSpreadsheet", { adminToken: sessionStorage.getItem(adminTokenKey) }); els.operationsMessage.textContent = result.message; }
+  catch (error) { els.operationsMessage.textContent = `整理失敗：${error.message}`; }
+});
 els.syncCatalog.addEventListener("click", async () => {
-  const token = localStorage.getItem(adminTokenKey);
+  const token = sessionStorage.getItem(adminTokenKey);
   if (!token) return;
   els.operationsMessage.textContent = `正在同步 ${products.length} 件商品，請勿關閉頁面...`;
   try { const result = await apiRequest("catalogSeed", { adminToken: token, products }); els.operationsMessage.textContent = `已同步 ${result.count} 件商品到雲端。`; loadDashboard(); }
   catch (error) { els.operationsMessage.textContent = `同步失敗：${error.message}`; }
 });
 els.enableBackup.addEventListener("click", async () => {
-  try { const result = await apiRequest("installMaintenance", { adminToken: localStorage.getItem(adminTokenKey) }); els.operationsMessage.textContent = result.message; }
+  try { const result = await apiRequest("installMaintenance", { adminToken: sessionStorage.getItem(adminTokenKey) }); els.operationsMessage.textContent = result.message; }
   catch (error) { els.operationsMessage.textContent = error.message; }
 });
 
@@ -2059,6 +2065,9 @@ els.copyButton.addEventListener("click", async () => {
   else document.execCommand("copy");
   els.copyButton.textContent = "已複製";
   setTimeout(() => { els.copyButton.textContent = "複製內容"; }, 1200);
+});
+els.summaryLineButton.addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(els.summaryText.value); els.summaryLineButton.textContent = "已複製，前往 LINE"; } catch {}
 });
 
 applyFeeSettings(load(feeSettingsKey, { method: "ems", rate: 0.205, percent: 10, minFee: 100, extra: 0, notifyEmail: contactEmail, sheetUrl: "" }));
@@ -2070,6 +2079,9 @@ renderCoupons();
 renderOrders();
 calculateShipping(false);
 updateAdminAccess();
+if (sessionStorage.getItem(adminTokenKey)) {
+  apiRequest("orders", { adminToken: sessionStorage.getItem(adminTokenKey) }, "GET").then((result) => { orders = result.orders; save(orderStorageKey, orders); renderOrders(); loadDashboard(); loadSupportCases(); }).catch(() => {});
+}
 loadMemberProfile();
 loadCloudCatalog();
 const initialProductId = new URLSearchParams(location.search).get("product");

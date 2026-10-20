@@ -48,6 +48,7 @@ function doPost(e) {
     if (action === "catalogDelete") { requireAdminToken_(data.adminToken); return json_(catalogDelete_(data.productId)); }
     if (action === "catalogSeed") { requireAdminToken_(data.adminToken); return json_(catalogSeed_(data.products || [])); }
     if (action === "installMaintenance") { requireAdminToken_(data.adminToken); return json_(installMaintenance_()); }
+    if (action === "formatSpreadsheet") { requireAdminToken_(data.adminToken); return json_(formatSpreadsheet_()); }
     if (action === "logError") return json_(logError_(data));
     if (action === "updateStatus") {
       requireAdminToken_(data.adminToken);
@@ -447,7 +448,8 @@ function dashboard_() {
 function sendEmail_(to, subject, body, type, reference) {
   const sheet = ensureSheet_(EMAIL_LOG_SHEET, ["時間", "類型", "關聯編號", "收件者", "主旨", "狀態", "錯誤"]);
   try { MailApp.sendEmail(to, subject, body); sheet.appendRow([new Date(), type, reference, to, subject, "成功", ""]); }
-  catch (error) { sheet.appendRow([new Date(), type, reference, to, subject, "失敗", safe_(error.message)]); throw error; }
+  catch (error) { sheet.appendRow([new Date(), type, reference, to, subject, "失敗", safe_(error.message)]); return false; }
+  return true;
 }
 
 function logError_(data) {
@@ -467,7 +469,33 @@ function rateLimit_(key, limit, seconds) {
 function installMaintenance_() {
   ScriptApp.getProjectTriggers().filter(function(trigger) { return trigger.getHandlerFunction() === "dailyBackup_"; }).forEach(function(trigger) { ScriptApp.deleteTrigger(trigger); });
   ScriptApp.newTrigger("dailyBackup_").timeBased().everyDays(1).atHour(3).create();
-  return { ok: true, message: "每日備份已啟用" };
+  formatSpreadsheet_();
+  return { ok: true, message: "每日備份已啟用，試算表格式已整理" };
+}
+
+function formatSpreadsheet_() {
+  const book = SpreadsheetApp.openById(SPREADSHEET_ID);
+  book.getSheets().forEach(function(sheet) {
+    const rows = Math.max(1, sheet.getLastRow());
+    const columns = Math.max(1, sheet.getLastColumn());
+    const range = sheet.getRange(1, 1, rows, columns);
+    range.setFontFamily("Arial").setFontSize(11).setVerticalAlignment("middle").setWrap(true);
+    sheet.getRange(1, 1, 1, columns).setFontWeight("bold").setFontColor("#ffffff").setBackground("#1f6f68").setHorizontalAlignment("center");
+    sheet.setFrozenRows(1);
+    sheet.setRowHeight(1, 34);
+    if (rows > 1) sheet.setRowHeights(2, rows - 1, 30);
+    sheet.autoResizeColumns(1, columns);
+    for (let column = 1; column <= columns; column++) sheet.setColumnWidth(column, Math.min(320, Math.max(90, sheet.getColumnWidth(column))));
+    sheet.getBandings().forEach(function(banding) { banding.remove(); });
+    if (rows > 1) sheet.getRange(2, 1, rows - 1, columns).applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY, false, false);
+  });
+  audit_("整理試算表", "all", "已統一字體、欄寬、列高與標題格式");
+  return { ok: true, message: "試算表字體、欄寬、列高與標題已整理完成。" };
+}
+
+function authorizeServices_() {
+  MailApp.sendEmail(NOTIFY_EMAIL, "瑤光代購寄信權限測試", "寄信權限已完成授權，網站通知可以正常寄送。");
+  return "授權完成，測試信已寄出";
 }
 
 function dailyBackup_() {

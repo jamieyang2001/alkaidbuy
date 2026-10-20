@@ -294,7 +294,7 @@
         <section class="admin-operations">
           <div><p class="eyebrow">Operations</p><h2>營運總覽</h2></div>
           <div class="dashboard-stats" id="dashboardStats"><p>登入後載入營運資料。</p></div>
-          <div class="panel-actions"><button class="secondary-button" id="refreshDashboard" type="button">更新報表</button><button class="secondary-button" id="syncCatalog" type="button">首次同步全部商品</button><button class="secondary-button" id="enableBackup" type="button">啟用每日備份</button></div>
+          <div class="panel-actions"><a class="primary-button" href="#orders-admin">前往訂單管理</a><button class="secondary-button" id="refreshDashboard" type="button">更新報表</button><button class="secondary-button" id="formatSpreadsheet" type="button">整理試算表格式</button><button class="secondary-button" id="syncCatalog" type="button">首次同步全部商品</button><button class="secondary-button" id="enableBackup" type="button">啟用每日備份</button></div>
           <p class="login-hint" id="operationsMessage"></p>
         </section>
 
@@ -360,7 +360,7 @@
           <div class="order-list" id="orderList"></div>
         </div>
 
-        <div class="orders-panel">
+        <div class="orders-panel" id="orders-admin">
           <div class="orders-heading"><div><p class="eyebrow">After-sales</p><h2>售後案件管理</h2></div><button class="secondary-button" id="refreshSupport" type="button">更新案件</button></div>
           <div class="order-list" id="supportAdminList"><p class="empty-cart">登入後載入售後案件。</p></div>
         </div>

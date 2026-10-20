@@ -24,7 +24,7 @@ const load = (key, fallback) => {
 const save = (key, value) => localStorage.setItem(key, JSON.stringify(value));
 const money = (value) => `NT$${Math.round(Number(value) || 0).toLocaleString("zh-TW")}`;
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[character]);
-const lineUrl = (message) => `https://line.me/R/msg/text/?${encodeURIComponent(message)}`;
+const lineUrl = () => LINE_URL;
 
 function quoteId() {
   const now = new Date();
@@ -378,6 +378,9 @@ async function initCartPage() {
     const text = $("#summaryText").value;
     if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(text); else { $("#summaryText").select(); document.execCommand("copy"); }
     $("#copyButton").textContent = "已複製";
+  });
+  $("#summaryLineButton").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText($("#summaryText").value); $("#summaryLineButton").textContent = "已複製，前往 LINE"; } catch {}
   });
 }
 
