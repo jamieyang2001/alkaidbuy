@@ -1,12 +1,13 @@
 const API = "https://script.google.com/macros/s/AKfycbzpjqqe6NV_xusYI0mkrV3W9HtXsgQg-b-9vwNm4YvJ7tZij-Us80JtAm4MgCalAKFy/exec";
 const TOKEN_KEY = "yaoguang-admin-token";
-const stores = { matsukiyo: "松本清", muji: "無印良品", loft: "LOFT", yodobashi: "友都八喜", threecoins: "3COINS", seven: "7-11", other: "其他" };
+const stores = { matsukiyo: "松本清", muji: "無印良品", loft: "LOFT", yodobashi: "友都八喜", threecoins: "3COINS", seven: "7-11", lawson: "LAWSON", other: "其他" };
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"})[char]);
 const money = (value) => `NT$${Math.round(Number(value)||0).toLocaleString("zh-TW")}`;
 const token = () => sessionStorage.getItem(TOKEN_KEY);
 async function api(action, payload={}, method="POST") { const response = await fetch(method === "GET" ? `${API}?${new URLSearchParams({action,...payload})}` : API, method === "GET" ? {} : {method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action,...payload})}); const result=await response.json(); if(!result.ok) throw new Error(result.error||"操作失敗"); return result; }
 let products=[], orders=[], purchases=[], supportCases=[], operations={settlements:[],packing:[],alerts:[],packages:[],stock:[],costs:{}};
+if (![...$("#productStore").options].some((option) => option.value === "lawson")) $("#productStore").add(new Option("LAWSON", "lawson"));
 function showApp(active){$("#adminLoginPanel").hidden=active;$("#adminApp").hidden=!active;$("#adminLogout").hidden=!active;}
 async function loadAll(){$("#operationMessage").textContent="資料載入中..."; const [dashboard,orderData,catalog,purchaseData,supportData,operationData]=await Promise.all([api("dashboard",{adminToken:token()},"GET"),api("orders",{adminToken:token()},"GET"),api("catalog",{},"GET"),api("purchaseSummary",{adminToken:token()},"GET"),api("supportCases",{adminToken:token()},"GET"),api("operationsCenter",{adminToken:token()},"GET")]); products=catalog.products||[];orders=orderData.orders||[];purchases=purchaseData.summary||[];supportCases=supportData.cases||[];operations=operationData.data||operations; renderDashboard(dashboard.dashboard);renderOrders();renderProducts();renderPurchases();renderSupport();renderOperations();$("#operationMessage").textContent=`已載入 ${orders.length} 筆訂單、${products.length} 件商品。`;}
 function renderDashboard(data){$("#dashboardStats").innerHTML=`<div><span>今日訂單</span><strong>${data.todayOrders}</strong></div><div><span>累積營業額</span><strong>${money(data.revenue)}</strong></div><div><span>商品</span><strong>${data.products}</strong></div><div><span>缺貨</span><strong>${data.outOfStock}</strong></div><div><span>未處理售後</span><strong>${data.pendingSupport}</strong></div>`;}

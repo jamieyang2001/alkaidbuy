@@ -5,9 +5,22 @@ const categories = [
   { id: "yodobashi", label: "友都八喜", description: "熱門3C、相機周邊、行動電源與生活小家電。", image: "https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=900&q=80" },
   { id: "threecoins", label: "3COINS", description: "廚房收納、生活雜貨、人氣便利小物。", image: "https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=900&q=80" },
   { id: "seven", label: "7-11 餅乾糖果", description: "日本 7-Eleven 餅乾、糖果、巧克力與零食。", image: "https://images.unsplash.com/photo-1621939514649-280e2ee25f60?auto=format&fit=crop&w=900&q=80" },
+  { id: "lawson", label: "LAWSON", description: "LAWSON 原創零食、健康點心與便利商店限定商品。", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Lawson_Logo.svg/800px-Lawson_Logo.svg.png" },
 ];
 
 const defaultProducts = [
+  {"id":"lawson-01","name":"LAWSON エアリアル トムヤムクン味","category":"lawson","subcategory":"洋芋片／鹹食","yenPrice":178,"weight":75,"spec":"55g","status":"可代購","description":"LAWSON 官網商品，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l818809.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1533271_1996.html"},
+  {"id":"lawson-02","name":"LAWSON ザクッとポテト 鹽味","category":"lawson","subcategory":"洋芋片／鹹食","yenPrice":130,"weight":77,"spec":"57g","status":"可代購","description":"LAWSON 原創厚切洋芋片，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l720672_3.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1467128_1996.html"},
+  {"id":"lawson-03","name":"LAWSON ザクッとポテト コンソメ味","category":"lawson","subcategory":"洋芋片／鹹食","yenPrice":130,"weight":72,"spec":"52g","status":"可代購","description":"LAWSON 原創旨味高湯洋芋片，價格與庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l803686_1.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1465753_1996.html"},
+  {"id":"lawson-04","name":"LAWSON ザクッとポテト 松露鹽味","category":"lawson","subcategory":"洋芋片／鹹食","yenPrice":148,"weight":77,"spec":"57g","status":"可代購","description":"LAWSON 原創松露鹽風味洋芋片，價格與庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l787552_1.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1510255_1996.html"},
+  {"id":"lawson-05","name":"LAWSON ザクッとポテト 伊勢海老味","category":"lawson","subcategory":"洋芋片／鹹食","yenPrice":148,"weight":77,"spec":"57g","status":"可代購","description":"LAWSON 原創伊勢海老風味洋芋片，價格與庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l787551_1.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1510254_1996.html"},
+  {"id":"lawson-06","name":"LAWSON BIG ザクッとポテト 鹽味","category":"lawson","subcategory":"洋芋片／鹹食","yenPrice":268,"weight":125,"spec":"大包裝","status":"可代購","description":"LAWSON 原創大包裝洋芋片，價格與庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l601744_6.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1425491_1996.html"},
+  {"id":"lawson-07","name":"LAWSON BIG ザクッとポテト コンソメ味","category":"lawson","subcategory":"洋芋片／鹹食","yenPrice":268,"weight":125,"spec":"大包裝","status":"可代購","description":"LAWSON 原創大包裝高湯風味洋芋片，價格與庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l775787_2.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1504223_1996.html"},
+  {"id":"lawson-08","name":"LAWSON パリッとポテト 濃海苔鹽味","category":"lawson","subcategory":"洋芋片／鹹食","yenPrice":130,"weight":70,"spec":"50g","status":"可代購","description":"LAWSON 原創海苔鹽風味洋芋片，價格與庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l720676_2.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1467439_1996.html"},
+  {"id":"lawson-09","name":"LAWSON 國產馬鈴薯洋芋片 鹽味","category":"lawson","subcategory":"洋芋片／鹹食","yenPrice":130,"weight":70,"spec":"1袋","status":"可代購","description":"日本國產馬鈴薯製，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l733180_1.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1473727_1996.html"},
+  {"id":"lawson-10","name":"LAWSON 國產馬鈴薯洋芋片 コンソメ味","category":"lawson","subcategory":"洋芋片／鹹食","yenPrice":130,"weight":70,"spec":"1袋","status":"可代購","description":"日本國產馬鈴薯製，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l733182_1.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1473728_1996.html"},
+  {"id":"lawson-11","name":"LAWSON 厚切洋芋片 酸奶洋蔥味","category":"lawson","subcategory":"洋芋片／鹹食","yenPrice":138,"weight":75,"spec":"1袋","status":"可代購","description":"LAWSON 原創酸奶洋蔥風味洋芋片，價格與庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l790765.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1511155_1996.html"},
+  {"id":"lawson-12","name":"LAWSON すっぱムーチョ 清爽梅味","category":"lawson","subcategory":"洋芋片／鹹食","yenPrice":138,"weight":75,"spec":"1袋","status":"可代購","description":"LAWSON 梅子風味洋芋片，價格與店舖庫存以採購日為準。","image":"https://www.lawson.co.jp/recommend/original/detail/img/l790767.jpg","sourceUrl":"https://www.lawson.co.jp/recommend/original/detail/1511154_1996.html"},
   {"id":"matsukiyo-01","name":"matsukiyo 天然純棉化妝棉 248枚","category":"matsukiyo","price":62,"weight":180,"status":"可代購","description":"官網參考價 283円。乾燥棉製品，適合國際寄送。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/9/4973560041287_01_f08d666c09654f607bd9ce50a85f8fab.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4973560041287"},
   {"id":"matsukiyo-02","name":"matsukiyo 大尺寸純棉化妝棉 130枚","category":"matsukiyo","price":72,"weight":180,"status":"可代購","description":"官網參考價 327円。乾燥棉製品，適合國際寄送。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/9/4973202205060_01_f08d666c09654f607bd9ce50a85f8fab.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4973202205060"},
   {"id":"matsukiyo-03","name":"うるふか化妝棉 100枚","category":"matsukiyo","price":72,"weight":150,"status":"可代購","description":"官網參考價 327円。100% 純棉乾燥用品。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/9/4973202301045_01_008016d565441e4c8deed5aee3222fcd.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4973202301045"},
@@ -44,10 +57,10 @@ const defaultProducts = [
   {"id":"matsukiyo-38","name":"Smile 40 Premium DX 眼藥水","category":"matsukiyo","subcategory":"眼藥水／洗眼液","yenPrice":877,"price":877,"weight":55,"spec":"15mL","variants":["15mL"],"status":"需確認輸入","description":"官網參考價約 877円。第2類醫藥品，需確認台灣輸入規定。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/9/4903301339779_01_f08d666c09654f607bd9ce50a85f8fab.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4903301339779"},
   {"id":"matsukiyo-41","name":"UHA 瞬間サプリ マルチビタミン 30日分","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":1296,"price":1296,"weight":110,"spec":"60粒","variants":["60粒 / 30日分"],"status":"需確認輸入","description":"官網參考價約 1,296円。保健食品類，需確認輸入規定與數量。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/9/4902750715554_01_f08d666c09654f607bd9ce50a85f8fab.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4902750715554"},
   {"id":"matsukiyo-42","name":"UHA グミサプリ DHA&EPA 14日分","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":798,"price":798,"weight":100,"spec":"28粒","variants":["28粒 / 14日分"],"status":"需確認輸入","description":"官網參考價約 798円。保健食品類，需確認台灣輸入規定。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/9/4902750735927_01_f08d666c09654f607bd9ce50a85f8fab.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4902750776821"},
-  {"id":"matsukiyo-43","name":"UHA ぷにキャラグミ ディズニープリンセス","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":198,"price":198,"weight":65,"spec":"50g","variants":["50g"],"status":"可代購","description":"官網參考價約 198円。糖果食品，輸入數量與成分仍需依規定確認。","image":"https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=900&q=80","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4902750794160"},
-  {"id":"matsukiyo-44","name":"UHA グミだま いちご","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":198,"price":198,"weight":70,"spec":"55g","variants":["55g"],"status":"可代購","description":"官網參考價約 198円。草莓風味糖果食品，輸入數量與成分仍需確認。","image":"https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=900&q=80","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4902750837812"},
-  {"id":"matsukiyo-45","name":"UHA 特濃ミルク 8.2","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":238,"price":238,"weight":105,"spec":"88g","variants":["88g"],"status":"可代購","description":"官網參考價約 238円。牛奶糖，含乳成分，需確認食品輸入規定。","image":"https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=900&q=80","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4902750910454"},
-  {"id":"matsukiyo-46","name":"UHA 純露 糖果","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":248,"price":248,"weight":140,"spec":"120g","variants":["120g"],"status":"可代購","description":"官網參考價約 248円。經典糖果，輸入數量與成分仍需確認。","image":"https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=900&q=80","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4902750697874"},
+  {"id":"matsukiyo-43","name":"UHA ぷにキャラグミ ディズニープリンセス","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":198,"price":198,"weight":65,"spec":"50g","variants":["50g"],"status":"可代購","description":"官網參考價約 198円。糖果食品，輸入數量與成分仍需依規定確認。","image":"https://www.uha-mikakuto.co.jp/catalog/gummy/img/gu300.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4902750794160"},
+  {"id":"matsukiyo-44","name":"UHA グミだま いちご","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":198,"price":198,"weight":70,"spec":"55g","variants":["55g"],"status":"可代購","description":"官網參考價約 198円。草莓風味糖果食品，輸入數量與成分仍需確認。","image":"https://cdn.tajimaya-app.com/current/4902750837812.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4902750837812"},
+  {"id":"matsukiyo-45","name":"UHA 特濃ミルク 8.2","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":238,"price":238,"weight":105,"spec":"88g","variants":["88g"],"status":"可代購","description":"官網參考價約 238円。牛奶糖，含乳成分，需確認食品輸入規定。","image":"https://cdn.askul.co.jp/img/product/3L1/EJ14069_3L1.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4902750910454"},
+  {"id":"matsukiyo-46","name":"UHA 純露 糖果","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":248,"price":248,"weight":140,"spec":"120g","variants":["120g"],"status":"可代購","description":"官網參考價約 248円。經典糖果，輸入數量與成分仍需確認。","image":"https://image.biccamera.com/img/00000004659550_A02.jpg?sr.dh=600&sr.dw=600&sr.jqh=60&sr.mat=1","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4902750697874"},
   {"id":"matsukiyo-47","name":"DHC マルチビタミン 60日分","category":"matsukiyo","subcategory":"DHC 維他命／保健食品","yenPrice":861,"price":861,"weight":80,"spec":"60日分","variants":["60日分"],"status":"需確認輸入","description":"官網參考價約 861円。營養機能食品，需確認台灣輸入規定與數量。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/5/4511413407363_01_f08d666c09654f607bd9ce50a85f8fab.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4511413407363"},
   {"id":"matsukiyo-48","name":"DHC ビタミンC 60日分","category":"matsukiyo","subcategory":"DHC 維他命／保健食品","yenPrice":396,"price":396,"weight":80,"spec":"60日分","variants":["60日分"],"status":"需確認輸入","description":"官網參考價約 396円。維他命C補充品，需確認輸入規定。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/5/4511413408254_01_9ce50c0680c5a2ad9a59dca50b42dbe7.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4511413408254"},
   {"id":"matsukiyo-49","name":"DHC ビタミンBミックス 60日分","category":"matsukiyo","subcategory":"DHC 維他命／保健食品","yenPrice":498,"price":498,"weight":80,"spec":"60日分","variants":["60日分"],"status":"需確認輸入","description":"官網參考價約 498円。維他命B群補充品，需確認台灣輸入規定。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/5/4511413405055_01_f08d666c09654f607bd9ce50a85f8fab.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalog/product/view/id/4511413405055"},
@@ -64,8 +77,8 @@ const defaultProducts = [
   {"id":"matsukiyo-60","name":"Eyebon W Vitamin 洗眼液","category":"matsukiyo","subcategory":"眼藥水／洗眼液","yenPrice":1210,"price":1210,"weight":560,"spec":"500mL","variants":["500mL"],"status":"需確認輸入","description":"官網參考價約 1,210円。洗眼液為液態醫藥品，寄送和輸入皆需確認。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/9/4987072071267_01_f08d666c09654f607bd9ce50a85f8fab.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalogsearch/result/?q=Eyebon%20W%20Vitamin"},
   {"id":"matsukiyo-62","name":"UHA グミサプリ ルテイン 20日分","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":861,"price":861,"weight":110,"spec":"40粒","variants":["40粒 / 20日分"],"status":"需確認輸入","description":"官網參考價約 861円。葉黃素軟糖補充食品，需確認輸入規定。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/9/4902750735927_01_f08d666c09654f607bd9ce50a85f8fab.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalogsearch/result/?q=UHA%20%E3%82%B0%E3%83%9F%E3%82%B5%E3%83%97%E3%83%AA%20%E3%83%AB%E3%83%86%E3%82%A4%E3%83%B3"},
   {"id":"matsukiyo-64","name":"UHA グミサプリ 亜鉛 20日分","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":798,"price":798,"weight":100,"spec":"40粒","variants":["40粒 / 20日分"],"status":"需確認輸入","description":"官網參考價約 798円。鋅軟糖補充食品，需確認台灣輸入規定。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/9/4902750715554_01_f08d666c09654f607bd9ce50a85f8fab.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalogsearch/result/?q=UHA%20%E3%82%B0%E3%83%9F%E3%82%B5%E3%83%97%E3%83%AA%20%E4%BA%9C%E9%89%9B"},
-  {"id":"matsukiyo-65","name":"UHA コロロ グレープ","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":188,"price":188,"weight":65,"spec":"48g","variants":["葡萄 48g"],"status":"可代購","description":"官網參考價約 188円。軟糖食品，輸入數量與成分仍需確認。","image":"https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=900&q=80","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalogsearch/result/?q=UHA%20%E3%82%B3%E3%83%AD%E3%83%AD%20%E3%82%B0%E3%83%AC%E3%83%BC%E3%83%97"},
-  {"id":"matsukiyo-66","name":"UHA 忍者めし 巨峰","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":158,"price":158,"weight":45,"spec":"20g","variants":["巨峰 20g"],"status":"可代購","description":"官網參考價約 158円。咀嚼系軟糖，食品輸入數量與成分需確認。","image":"https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=900&q=80","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalogsearch/result/?q=UHA%20%E5%BF%8D%E8%80%85%E3%82%81%E3%81%97"},
+  {"id":"matsukiyo-65","name":"UHA コロロ グレープ","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":188,"price":188,"weight":65,"spec":"48g","variants":["葡萄 48g"],"status":"可代購","description":"官網參考價約 188円。軟糖食品，輸入數量與成分仍需確認。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/9/4902750735927_01_f08d666c09654f607bd9ce50a85f8fab.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalogsearch/result/?q=UHA%20%E3%82%B3%E3%83%AD%E3%83%AD%20%E3%82%B0%E3%83%AC%E3%83%BC%E3%83%97"},
+  {"id":"matsukiyo-66","name":"UHA 忍者めし 巨峰","category":"matsukiyo","subcategory":"UHA 味覺糖","yenPrice":158,"price":158,"weight":45,"spec":"20g","variants":["巨峰 20g"],"status":"可代購","description":"官網參考價約 158円。咀嚼系軟糖，食品輸入數量與成分需確認。","image":"https://global-satudora.com/cdn/shop/files/4902750615113-1_f425a361-19a9-458c-911f-38a9cb1b973c.png?v=1741222246&width=1200","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalogsearch/result/?q=UHA%20%E5%BF%8D%E8%80%85%E3%82%81%E3%81%97"},
   {"id":"matsukiyo-67","name":"DHC ルテイン 光対策 60日分","category":"matsukiyo","subcategory":"DHC 維他命／保健食品","yenPrice":1544,"price":1544,"weight":90,"spec":"60日分","variants":["60日分"],"status":"需確認輸入","description":"官網參考價約 1,544円。葉黃素保健食品，需確認台灣輸入規定。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/5/4511413404119_01_f08d666c09654f607bd9ce50a85f8fab.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalogsearch/result/?q=DHC%20%E3%83%AB%E3%83%86%E3%82%A4%E3%83%B3"},
   {"id":"matsukiyo-68","name":"DHC ビタミンD 30日分","category":"matsukiyo","subcategory":"DHC 維他命／保健食品","yenPrice":324,"price":324,"weight":55,"spec":"30日分","variants":["30日分"],"status":"需確認輸入","description":"官網參考價約 324円。維他命D補充品，需確認輸入規定。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/5/4511413408254_01_9ce50c0680c5a2ad9a59dca50b42dbe7.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalogsearch/result/?q=DHC%20%E3%83%93%E3%82%BF%E3%83%9F%E3%83%B3D"},
   {"id":"matsukiyo-69","name":"DHC はとむぎエキス 30日分","category":"matsukiyo","subcategory":"DHC 維他命／保健食品","yenPrice":648,"price":648,"weight":70,"spec":"30日分","variants":["30日分"],"status":"需確認輸入","description":"官網參考價約 648円。薏仁萃取保健食品，需確認台灣輸入規定。","image":"https://www.matsukiyococokara-online.com/store/media/catalog/product/4/5/4511413404041_01_f08d666c09654f607bd9ce50a85f8fab.jpg","sourceUrl":"https://www.matsukiyococokara-online.com/store/catalogsearch/result/?q=DHC%20%E3%81%AF%E3%81%A8%E3%82%80%E3%81%8E%E3%82%A8%E3%82%AD%E3%82%B9"},
@@ -1366,8 +1379,10 @@ function renderCategories() {
 function openCategory(id) {
   activeCategory = id;
   productLimit = 60;
-  els.categoryGrid.hidden = true;
+  els.categoryGrid.hidden = false;
   els.categoryView.hidden = false;
+  document.querySelector("#products").classList.add("category-open");
+  els.categoryGrid.querySelectorAll(".category-card").forEach((card) => card.classList.toggle("active", card.dataset.category === id));
   els.categoryTitle.textContent = `${categoryLabel(id)}商品清單`;
   const subcategories = [...new Set(products.filter((product) => product.category === id).map(productSubcategory))];
   els.productSubcategory.innerHTML = '<option value="">全部細分類</option>' + subcategories.map((item) => `<option value="${item}">${item}</option>`).join("");
@@ -1497,6 +1512,22 @@ function addToCart(id, selectedVariant) {
   }
   renderCart();
   syncMemberData();
+  showCartToast(`${product.name} 已加入購物車`);
+}
+
+function showCartToast(message) {
+  let toast = document.querySelector("#cartToast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "cartToast";
+    toast.className = "cart-toast";
+    toast.setAttribute("role", "status");
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.classList.add("show");
+  clearTimeout(showCartToast.timer);
+  showCartToast.timer = setTimeout(() => toast.classList.remove("show"), 2200);
 }
 
 function calculateShipping(showMessage = false) {
@@ -1789,7 +1820,18 @@ els.checkoutForm.addEventListener("submit", async (event) => {
   else showSummary(`${message}\n\n已成功送出訂單。請保存訂單編號，可在網站查詢進度。`);
 });
 
-els.specialType.addEventListener("change", () => { document.body.dataset.requestType = els.specialType.value; });
+function updateSpecialRequirements() {
+  const type = els.specialType.value;
+  document.body.dataset.requestType = type;
+  $("#requestName").required = type !== "代訂位";
+  $("#itemQuantity").required = type === "代訂票" || /商品|網拍/.test(type);
+  $("#venueName").required = type === "代訂位";
+  $("#peopleCount").required = type === "代訂位";
+  $("#specialDate").required = type === "代訂位" || type === "代訂票";
+  $("#specialTime").required = type === "代訂位" || type === "代訂票";
+}
+els.specialType.addEventListener("change", updateSpecialRequirements);
+updateSpecialRequirements();
 
 els.specialForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -2084,5 +2126,14 @@ if (sessionStorage.getItem(adminTokenKey)) {
 }
 loadMemberProfile();
 loadCloudCatalog();
+window.addEventListener("pageshow", () => {
+  cart = load(cartStorageKey, []);
+  renderCart();
+});
+document.querySelectorAll('input[type="number"]').forEach((input) => {
+  input.addEventListener("keydown", (event) => {
+    if (["e", "E", "+", "-"].includes(event.key)) event.preventDefault();
+  });
+});
 const initialProductId = new URLSearchParams(location.search).get("product");
 if (initialProductId && products.some((product) => product.id === initialProductId)) openProductDetail(initialProductId);

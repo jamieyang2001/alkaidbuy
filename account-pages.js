@@ -120,6 +120,17 @@ function showLoggedOut(message = "") {
 }
 
 async function initMemberPage() {
+  const panels = {
+    login: $("#memberLoginForm"),
+    register: $("#memberRegisterForm"),
+    forgot: $("#passwordResetRequestForm"),
+    confirm: $("#passwordResetConfirmForm"),
+  };
+  const showAuthPanel = (name) => Object.entries(panels).forEach(([key, form]) => { if (form) form.hidden = key !== name; });
+  $("#memberAuth").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-auth-panel]");
+    if (button) showAuthPanel(button.dataset.authPanel);
+  });
   const session = currentSession();
   if (session?.token) {
     $("#memberMessage").textContent = "正在載入會員資料...";
@@ -136,10 +147,7 @@ async function initMemberPage() {
     try {
       const result = await apiRequest("memberRegister", { name: $("#memberRegisterName").value.trim(), email: $("#memberRegisterEmail").value.trim(), password: $("#memberRegisterPassword").value });
       save(SESSION_KEY, { token: result.token });
-      event.currentTarget.reset();
-      const profile = await apiRequest("memberProfile", { token: result.token }, "GET");
-      renderMemberProfile(profile.profile);
-      $("#memberMessage").textContent = "會員申請完成，已自動登入。";
+      location.replace("member.html");
     } catch (error) { $("#memberMessage").textContent = error.message; }
   });
 
@@ -148,11 +156,39 @@ async function initMemberPage() {
     $("#memberMessage").textContent = "登入中...";
     try {
       const result = await apiRequest("memberLogin", { email: $("#memberLoginEmail").value.trim(), password: $("#memberLoginPassword").value });
+      if (result.admin) {
+        sessionStorage.setItem("yaoguang-admin-token", result.adminToken);
+        location.replace("admin.html");
+        return;
+      }
       save(SESSION_KEY, { token: result.token });
       event.currentTarget.reset();
       const profile = await apiRequest("memberProfile", { token: result.token }, "GET");
       renderMemberProfile(profile.profile);
       $("#memberMessage").textContent = "";
+    } catch (error) { $("#memberMessage").textContent = error.message; }
+  });
+
+  $("#passwordResetRequestForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const email = $("#resetEmail").value.trim();
+    $("#memberMessage").textContent = "正在寄送驗證碼...";
+    try {
+      await apiRequest("passwordResetRequest", { email });
+      $("#resetConfirmEmail").value = email;
+      showAuthPanel("confirm");
+      $("#memberMessage").textContent = "如果此 Email 已註冊，驗證碼已寄出，15 分鐘內有效。";
+    } catch (error) { $("#memberMessage").textContent = error.message; }
+  });
+
+  $("#passwordResetConfirmForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    $("#memberMessage").textContent = "正在更新密碼...";
+    try {
+      await apiRequest("passwordResetConfirm", { email: $("#resetConfirmEmail").value.trim(), code: $("#resetCode").value.trim(), password: $("#resetNewPassword").value });
+      event.currentTarget.reset();
+      showAuthPanel("login");
+      $("#memberMessage").textContent = "密碼已更新，請使用新密碼登入。";
     } catch (error) { $("#memberMessage").textContent = error.message; }
   });
 
@@ -396,3 +432,10 @@ async function initCartPage() {
 
 if (document.body.dataset.page === "member") initMemberPage();
 if (document.body.dataset.page === "cart") initCartPage();
+window.addEventListener("pageshow", () => {
+  cart = load(CART_KEY, []);
+  if (document.body.dataset.page === "cart") renderCart();
+});
+document.querySelectorAll('input[type="number"]').forEach((input) => input.addEventListener("keydown", (event) => {
+  if (["e", "E", "+", "-"].includes(event.key)) event.preventDefault();
+}));

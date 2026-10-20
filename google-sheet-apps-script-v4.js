@@ -5,6 +5,7 @@ const MEMBER_SHEET = "會員";
 const MEMBER_COUPON_SHEET = "會員折價券";
 const MEMBER_SESSION_SHEET = "會員登入";
 const MEMBER_DATA_SHEET = "會員資料";
+const PASSWORD_RESET_SHEET = "密碼重設";
 const SUPPORT_SHEET = "售後申請";
 const ADMIN_SESSION_SHEET = "後台登入";
 const NOTIFY_EMAIL = "alkaidbuy@gmail.com";
@@ -45,6 +46,8 @@ function doPost(e) {
     if (action === "create") return json_(createOrder_(data.order || data));
     if (action === "memberRegister") return json_(memberRegister_(data));
     if (action === "memberLogin") return json_(memberLogin_(data));
+    if (action === "passwordResetRequest") return json_(passwordResetRequest_(data));
+    if (action === "passwordResetConfirm") return json_(passwordResetConfirm_(data));
     if (action === "memberLogout") return json_(memberLogout_(data.token));
     if (action === "memberDataSave") return json_(memberDataSave_(data));
     if (action === "supportCreate") return json_(supportCreate_(data));
@@ -311,6 +314,10 @@ function memberRegister_(data) {
 function memberLogin_(data) {
   const email = normalizeEmail_(data.email);
   const password = String(data.password || "");
+  if (email === normalizeEmail_(NOTIFY_EMAIL)) {
+    const admin = adminLogin_(password);
+    return { ok: true, admin: true, adminToken: admin.adminToken, expires: admin.expires };
+  }
   const member = findMemberByEmail_(email);
   if (!member || member.status !== "啟用" || passwordHash_(password, member.salt) !== member.passwordHash) {
     throw new Error("Email或密碼錯誤");
@@ -434,6 +441,41 @@ function catalogList_() {
   const sheet = ensureSheet_(CATALOG_SHEET, ["商品ID", "商品JSON", "更新時間", "啟用"]);
   if (sheet.getLastRow() < 2) return [];
   return sheet.getRange(2, 1, sheet.getLastRow() - 1, 4).getValues().filter(function(row) { return String(row[3] || "啟用") === "啟用"; }).map(function(row) { return parseJson_(row[1], null); }).filter(Boolean);
+}
+
+function passwordResetRequest_(data) {
+  const email = normalizeEmail_(data.email);
+  rateLimit_("password-reset:" + email, 3, 3600);
+  const member = findMemberByEmail_(email);
+  if (member) {
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const salt = Utilities.getUuid();
+    const expires = new Date(Date.now() + 15 * 60 * 1000);
+    ensureSheet_(PASSWORD_RESET_SHEET, ["Email", "驗證碼雜湊", "鹽值", "建立時間", "到期時間", "狀態"]).appendRow([email, passwordHash_(code, salt), salt, new Date(), expires, "啟用"]);
+    sendEmail_(email, "瑤光代購密碼重設驗證碼", "您的驗證碼是：" + code + "\n\n此驗證碼 15 分鐘內有效。若不是您本人操作，請忽略這封信。", "密碼重設", email);
+  }
+  return { ok: true };
+}
+
+function passwordResetConfirm_(data) {
+  const email = normalizeEmail_(data.email);
+  const code = String(data.code || "").trim();
+  const password = String(data.password || "");
+  if (!/^\d{6}$/.test(code)) throw new Error("請輸入 6 位數驗證碼");
+  if (password.length < 8) throw new Error("密碼至少需要 8 個字元");
+  const member = findMemberByEmail_(email);
+  if (!member) throw new Error("驗證碼錯誤或已失效");
+  const sheet = ensureSheet_(PASSWORD_RESET_SHEET, ["Email", "驗證碼雜湊", "鹽值", "建立時間", "到期時間", "狀態"]);
+  const rows = sheet.getLastRow() < 2 ? [] : sheet.getRange(2, 1, sheet.getLastRow() - 1, 6).getValues();
+  let found = null;
+  for (let index = rows.length - 1; index >= 0; index--) {
+    if (normalizeEmail_(rows[index][0]) === email && rows[index][5] === "啟用") { found = { row: index + 2, values: rows[index] }; break; }
+  }
+  if (!found || new Date(found.values[4]) < new Date() || passwordHash_(code, found.values[2]) !== found.values[1]) throw new Error("驗證碼錯誤或已失效");
+  const salt = Utilities.getUuid();
+  sheet_(MEMBER_SHEET).getRange(member.row, 4, 1, 2).setValues([[passwordHash_(password, salt), salt]]);
+  sheet.getRange(found.row, 6).setValue("已使用");
+  return { ok: true };
 }
 
 function catalogUpsert_(product) {

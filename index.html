@@ -19,11 +19,10 @@
         <a href="#special">代訂</a>
         <a href="#shipping">運費</a>
         <a href="cart.html">購物車</a>
-        <a href="member.html">會員</a>
         <a href="#lookup">查詢</a>
         <a href="#faq">FAQ</a>
-        <a href="admin.html">後台</a>
       </nav>
+      <a class="account-button" href="member.html">會員登入</a>
       <a class="line-button" href="https://lin.ee/NxJLmwO" target="_blank" rel="noreferrer">LINE</a>
     </header>
 
@@ -58,7 +57,7 @@
 
         <div class="category-view" id="categoryView" hidden>
           <div class="category-toolbar">
-            <button class="secondary-button" id="backToCategories" type="button">返回分類</button>
+            <button class="secondary-button" id="backToCategories" type="button" hidden>返回分類</button>
             <div>
               <p class="eyebrow">Category</p>
               <h2 id="categoryTitle">商品清單</h2>
@@ -124,8 +123,8 @@
           <label class="reservation-field ticket-field">時間<input id="specialTime" type="time" /></label>
           <label class="reservation-field">人數<input id="peopleCount" type="number" min="1" step="1" placeholder="2" /></label>
           <label class="ticket-field product-field">數量<input id="itemQuantity" type="number" min="1" step="1" placeholder="1" /></label>
-          <label>預算<input id="specialBudget" type="text" placeholder="例：NT$3,000 內" /></label>
-          <label class="full">需求內容<textarea id="specialDetails" rows="5" placeholder="請填寫座位偏好、尺寸、顏色、票種、注意事項或其他需求" required></textarea></label>
+          <label>預算 NT$<input id="specialBudget" type="number" inputmode="numeric" min="1" step="1" placeholder="3000" required /></label>
+          <label class="full">需求內容（選填）<textarea id="specialDetails" rows="5" placeholder="可填座位偏好、尺寸、顏色、票種、注意事項或其他需求"></textarea></label>
           <button class="primary-button form-submit" type="submit">產生詢問內容</button>
         </form>
       </section>
@@ -142,11 +141,11 @@
             <label>寄送方式<select id="shippingMethod"><option value="ems">EMS 國際快捷</option><option value="smallPacketAir">小形包裝物 航空</option></select></label>
             <label>包裝後重量 g<input id="shippingWeight" type="number" min="1" max="30000" step="1" value="500" /></label>
             <label>商品日幣金額<input id="itemYen" type="number" min="0" step="1" value="5000" /></label>
-            <label>匯率 JPY → TWD<input id="yenRate" type="number" min="0" step="0.001" value="0.205" /></label>
-            <label>日本國內運費 日幣<input id="domesticYen" type="number" min="0" step="1" value="0" /></label>
+            <label>匯率 JPY → TWD<input id="yenRate" type="number" min="0" step="0.001" value="0.205" readonly aria-readonly="true" /></label>
+            <label>日本國內運費 日幣<input id="domesticYen" type="number" min="0" step="1" value="0" readonly aria-readonly="true" /></label>
             <label hidden>代購服務費 %<input id="servicePercent" type="number" min="0" step="1" value="10" /></label>
             <label hidden>最低服務費 台幣<input id="minimumFee" type="number" min="0" step="1" value="100" /></label>
-            <label>其他費用 台幣<input id="extraFee" type="number" min="0" step="1" value="0" /></label>
+            <label>額外需求預算 台幣<input id="extraFee" type="number" min="0" step="1" value="0" /></label>
             <button class="primary-button form-submit" type="submit">產生運費報價</button>
           </form>
           <div class="shipping-result">
