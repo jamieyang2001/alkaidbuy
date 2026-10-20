@@ -91,7 +91,7 @@ function renderMemberProfile(profile) {
   const points = Math.floor(spent / 100);
   $("#memberStats").innerHTML = `<div><span>會員等級</span><strong>${tier}</strong></div><div><span>累積消費</span><strong>${money(spent)}</strong></div><div><span>瑤光點數</span><strong>${points.toLocaleString("zh-TW")} 點</strong></div>`;
   $("#memberOrderList").innerHTML = orders.length ? orders.map((order, orderIndex) => `
-    <article class="member-order"><header><div><strong>${escapeHtml(order.quoteId)}</strong><span>${escapeHtml(order.createdAt)}・${money(order.total || 0)}</span></div><span class="lookup-status">${escapeHtml(order.status)}</span></header>${statusTimeline(order.status)}<p class="order-updated">最後更新：${escapeHtml(order.updatedAt || order.createdAt)}${order.trackingNumber ? `・物流單號：${escapeHtml(order.trackingNumber)}` : ""}</p>
+    <article class="member-order"><header><div><strong>${escapeHtml(order.quoteId)}</strong><span>${escapeHtml(order.createdAt)}・${money(order.total || 0)}</span></div><span class="lookup-status">${escapeHtml(order.status)}</span></header>${statusTimeline(order.status)}<p class="order-updated">最後更新：${escapeHtml(order.updatedAt || order.createdAt)}${order.trackingNumber ? `・物流單號：${escapeHtml(order.trackingNumber)}` : ""}</p>${order.actualWeight ? `<p>包裝後實重：${Number(order.actualWeight).toLocaleString("zh-TW")}g・實際國際運費：${money(order.actualShipping || 0)}・付款狀態：${escapeHtml(order.paymentStatus || "未付款")}${order.balanceDue ? `・待補款：${money(order.balanceDue)}` : ""}</p>` : ""}
       <details><summary>查看購物明細</summary>${(order.items || []).map((item) => `<div class="member-order-item"><span>${escapeHtml(item.name)}・${escapeHtml(item.variant)} × ${item.quantity}</span><strong>${money(item.subtotal)}</strong></div>`).join("") || "<p>這筆詢問沒有固定商品明細。</p>"}${order.adminNote ? `<p>店家備註：${escapeHtml(order.adminNote)}</p>` : ""}</details>${order.items?.length ? `<button class="secondary-button reorder-button" type="button" data-order-index="${orderIndex}">再次購買</button>` : ""}
     </article>`).join("") : '<p class="empty-cart">目前還沒有會員訂單。</p>';
   $("#memberFavoriteList").innerHTML = savedProductCards(productList(load(FAVORITE_KEY, [])), true);
@@ -277,7 +277,7 @@ function applyCoupon() {
 
 function orderMessage(form, id, estimate) {
   const lines = cart.map((item) => `・${item.name}／${item.selectedVariant || item.spec || "標準款"} × ${item.quantity}，${money(item.price * item.quantity)}`);
-  return ["瑤光代購 固定商品訂單", `訂單編號：${id}`, `姓名：${form.name}`, `聯絡方式：${form.contact}`, "", "商品明細：", ...lines, "", `商品小計：${money(estimate.subtotal)}`, `優惠折抵：-${money(estimate.discount)}`, `預估國際運費：${estimate.outOfRange ? "需另詢" : money(estimate.shipping)}`, `預估合計：${estimate.outOfRange ? "需另詢" : money(estimate.total)}`, `付款方式：${form.payment}`, `取貨方式：${form.delivery}`, `備註：${form.note || "無"}`].join("\n");
+  return ["瑤光代購 固定商品訂單", `訂單編號：${id}`, `姓名：${form.name}`, `聯絡方式：${form.contact}`, "", "商品明細：", ...lines, "", `商品小計：${money(estimate.subtotal)}`, `優惠折抵：-${money(estimate.discount)}`, `預估國際運費：${estimate.outOfRange ? "需另詢" : money(estimate.shipping)}`, `預估合計：${estimate.outOfRange ? "需另詢" : money(estimate.total)}`, `付款方式：${form.payment}`, `取貨方式：${form.delivery}`, `缺貨處理：${form.outOfStockPreference}`, `備註：${form.note || "無"}`].join("\n");
 }
 
 function showSummary(message) {
@@ -354,10 +354,10 @@ async function initCartPage() {
     button.disabled = true;
     button.textContent = "訂單送出中...";
     const id = quoteId();
-    const form = { name: $("#orderName").value.trim(), contact: $("#orderContact").value.trim(), payment: $("#paymentMethod").value, delivery: `${$("#deliveryMethod").value}／${$("#deliveryAddress").value.trim() || "未填地址"}`, note: $("#orderNote").value.trim() };
+    const form = { name: $("#orderName").value.trim(), contact: $("#orderContact").value.trim(), payment: $("#paymentMethod").value, delivery: `${$("#deliveryMethod").value}／${$("#deliveryAddress").value.trim() || "未填地址"}`, outOfStockPreference: $("#outOfStockPreference").value, note: $("#orderNote").value.trim() };
     const estimate = cartEstimate();
     const message = orderMessage(form, id, estimate);
-    const order = { quoteId: id, type: "固定商品", customer: form.name, contact: form.contact, payment: form.payment, delivery: form.delivery, note: form.note, message, subtotal: estimate.subtotal, discount: estimate.discount, shipping: estimate.shipping, total: estimate.total, coupon: activeCoupon?.code || "", memberToken: currentSession()?.token || "", items: cart.map((item) => ({ id: item.id, name: item.name, variant: item.selectedVariant, quantity: item.quantity, price: item.price, weight: item.weight, category: item.category, status: item.status, sourceUrl: item.sourceUrl, image: item.image })) };
+    const order = { quoteId: id, type: "固定商品", customer: form.name, contact: form.contact, payment: form.payment, delivery: form.delivery, outOfStockPreference: form.outOfStockPreference, note: form.note, message, subtotal: estimate.subtotal, discount: estimate.discount, shipping: estimate.shipping, total: estimate.total, coupon: activeCoupon?.code || "", memberToken: currentSession()?.token || "", items: cart.map((item) => ({ id: item.id, name: item.name, variant: item.selectedVariant, quantity: item.quantity, price: item.price, weight: item.weight, category: item.category, status: item.status, sourceUrl: item.sourceUrl, image: item.image })) };
     try {
       await apiRequest("create", { order });
       const localOrders = load(ORDER_KEY, []);

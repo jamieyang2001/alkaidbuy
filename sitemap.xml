@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://alkaidbuy.vercel.app/</loc></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url><loc>https://alkaidbuy.vercel.app/</loc><image:image><image:loc>https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&amp;fit=crop&amp;w=2200&amp;q=85</image:loc><image:title>瑤光代購 日本商品代購服務</image:title></image:image></url>
   <url><loc>https://alkaidbuy.vercel.app/cart.html</loc></url>
   <url><loc>https://alkaidbuy.vercel.app/member.html</loc></url>
   <url><loc>https://alkaidbuy.vercel.app/policies.html</loc></url>

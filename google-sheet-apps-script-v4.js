@@ -11,6 +11,7 @@ const NOTIFY_EMAIL = "alkaidbuy@gmail.com";
 const CATALOG_SHEET = "商品雲端資料";
 const EMAIL_LOG_SHEET = "Email紀錄";
 const ERROR_LOG_SHEET = "網站錯誤";
+const AUDIT_LOG_SHEET = "後台操作紀錄";
 
 function doGet(e) {
   const action = String((e.parameter && e.parameter.action) || "health");
@@ -23,6 +24,7 @@ function doGet(e) {
       return json_({ ok: true, orders: listOrders_() });
     }
     if (action === "dashboard") { requireAdminToken_(e.parameter.adminToken); return json_({ ok: true, dashboard: dashboard_() }); }
+    if (action === "supportCases") { requireAdminToken_(e.parameter.adminToken); return json_({ ok: true, cases: listSupportCases_() }); }
     return json_({ ok: true, service: "瑤光代購訂單 API", time: new Date().toISOString() });
   } catch (error) {
     return json_({ ok: false, error: error.message });
@@ -51,6 +53,8 @@ function doPost(e) {
       requireAdminToken_(data.adminToken);
       return json_(updateStatus_(data.quoteId, data.status, data.adminNote, data.trackingNumber));
     }
+    if (action === "updateFulfillment") { requireAdminToken_(data.adminToken); return json_(updateFulfillment_(data)); }
+    if (action === "supportUpdate") { requireAdminToken_(data.adminToken); return json_(supportUpdate_(data)); }
     throw new Error("不支援的操作");
   } catch (error) {
     return json_({ ok: false, error: error.message });
@@ -68,7 +72,7 @@ function createOrder_(order) {
     now, safe_(order.quoteId), safe_(order.type), safe_(order.customer), safe_(order.contact),
     safe_(order.payment), safe_(order.delivery), number_(order.subtotal), number_(order.discount),
     number_(order.shipping), number_(order.total), "待確認", safe_(order.note), safe_(order.message),
-    now, "", "網站", member ? member.id : ""
+    now, "", "網站", member ? member.id : "", "", safe_(order.outOfStockPreference || "請先聯絡我再決定"), 0, 0, 0, "未付款"
   ]);
   const itemSheet = sheet_(ITEM_SHEET);
   (order.items || []).forEach(function(item) {
@@ -78,6 +82,9 @@ function createOrder_(order) {
       safe_(item.category), safe_(item.status), safe_(item.sourceUrl), safe_(item.image)
     ]);
   });
+  sendEmail_(NOTIFY_EMAIL, "瑤光代購新訂單：" + order.quoteId, order.message || ("新訂單 " + order.quoteId), "新訂單", order.quoteId);
+  const customerEmail = String(order.contact || "").trim();
+  if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(customerEmail)) sendEmail_(customerEmail, "瑤光代購已收到訂單：" + order.quoteId, "我們已收到您的訂單，確認價格與庫存後會再通知您。\n\n訂單編號：" + order.quoteId + "\n查詢：https://alkaidbuy.vercel.app/#lookup", "下單確認", order.quoteId);
   return { ok: true, quoteId: order.quoteId, status: "待確認", createdAt: now.toISOString() };
 }
 
@@ -92,7 +99,7 @@ function lookupOrder_(quoteId) {
 function listOrders_() {
   const sheet = sheet_(ORDER_SHEET);
   if (sheet.getLastRow() < 2) return [];
-  return sheet.getRange(2, 1, sheet.getLastRow() - 1, 19).getValues().reverse().map(rowToOrder_);
+  return sheet.getRange(2, 1, sheet.getLastRow() - 1, Math.max(24, sheet.getLastColumn())).getValues().reverse().map(rowToOrder_);
 }
 
 function updateStatus_(quoteId, status, adminNote, trackingNumber) {
@@ -107,7 +114,25 @@ function updateStatus_(quoteId, status, adminNote, trackingNumber) {
   if (trackingNumber !== undefined) sheet.getRange(found.row, 19).setValue(safe_(trackingNumber));
   const updated = sheet.getRange(found.row, 1, 1, 19).getValues()[0];
   notifyOrderStatus_(updated);
+  audit_("更新訂單狀態", quoteId, status);
   return { ok: true, quoteId: quoteId, status: status };
+}
+
+function updateFulfillment_(data) {
+  const found = findOrderRow_(data.quoteId);
+  if (!found) throw new Error("找不到訂單");
+  const sheet = sheet_(ORDER_SHEET);
+  const actualWeight = Math.max(0, number_(data.actualWeight));
+  const actualShipping = Math.max(0, number_(data.actualShipping));
+  const balanceDue = Math.max(0, number_(data.balanceDue));
+  const paymentStatus = String(data.paymentStatus || "未付款");
+  if (["未付款", "待補款", "已付款", "已退款"].indexOf(paymentStatus) < 0) throw new Error("付款狀態不正確");
+  sheet.getRange(found.row, 21, 1, 4).setValues([[actualWeight, actualShipping, balanceDue, safe_(paymentStatus)]]);
+  sheet.getRange(found.row, 15).setValue(new Date());
+  const updated = sheet.getRange(found.row, 1, 1, 24).getValues()[0];
+  notifyOrderStatus_(updated);
+  audit_("更新運費補款", data.quoteId, actualWeight + "g / NT$" + actualShipping + " / 補款NT$" + balanceDue + " / " + paymentStatus);
+  return { ok: true, order: rowToOrder_(updated) };
 }
 
 function supportCreate_(data) {
@@ -121,6 +146,26 @@ function supportCreate_(data) {
   sheet.appendRow([new Date(), id, member.id, member.email, safe_(data.quoteId), safe_(type), safe_(details), safe_(data.attachment), "待處理", new Date()]);
   sendEmail_(NOTIFY_EMAIL, "瑤光代購售後申請 " + id, "會員：" + member.name + "\nEmail：" + member.email + "\n訂單：" + (data.quoteId || "未指定") + "\n類型：" + type + "\n說明：" + details + "\n附件：" + (data.attachment || "無"), "售後申請", id);
   return { ok: true, supportId: id };
+}
+
+function listSupportCases_() {
+  const sheet = ensureSheet_(SUPPORT_SHEET, ["申請時間", "案件編號", "會員ID", "會員Email", "訂單編號", "類型", "說明", "附件網址", "狀態", "更新時間", "客服回覆"]);
+  if (sheet.getLastRow() < 2) return [];
+  return sheet.getRange(2, 1, sheet.getLastRow() - 1, Math.max(11, sheet.getLastColumn())).getValues().reverse().map(function(row) { return { createdAt: dateText_(row[0]), id: row[1], email: row[3], quoteId: row[4], type: row[5], details: row[6], attachment: row[7], status: row[8], updatedAt: dateText_(row[9]), reply: row[10] }; });
+}
+
+function supportUpdate_(data) {
+  const sheet = ensureSheet_(SUPPORT_SHEET, ["申請時間", "案件編號", "會員ID", "會員Email", "訂單編號", "類型", "說明", "附件網址", "狀態", "更新時間", "客服回覆"]);
+  if (sheet.getLastRow() < 2) throw new Error("找不到售後案件");
+  const cell = sheet.getRange(2, 2, sheet.getLastRow() - 1, 1).createTextFinder(String(data.supportId)).matchEntireCell(true).findNext();
+  if (!cell) throw new Error("找不到售後案件");
+  const allowed = ["待處理", "處理中", "等待客人回覆", "已完成", "已拒絕"];
+  if (allowed.indexOf(data.status) < 0) throw new Error("案件狀態不正確");
+  sheet.getRange(cell.getRow(), 9, 1, 3).setValues([[data.status, new Date(), safe_(data.reply)]]);
+  const email = String(sheet.getRange(cell.getRow(), 4).getValue() || "");
+  if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) sendEmail_(email, "瑤光代購售後案件更新：" + data.supportId, "案件狀態：" + data.status + "\n客服回覆：" + (data.reply || "無") + "\n\n會員中心：https://alkaidbuy.vercel.app/member.html", "售後更新", data.supportId);
+  audit_("更新售後案件", data.supportId, data.status);
+  return { ok: true };
 }
 
 function notifyOrderStatus_(row) {
@@ -163,10 +208,12 @@ function findMemberById_(id) {
 }
 
 function adminLogin_(password) {
+  rateLimit_("admin-login", 8, 900);
   requireAdmin_(password);
   const token = Utilities.getUuid().replace(/-/g, "") + Utilities.getUuid().replace(/-/g, "");
   const expires = new Date(Date.now() + 6 * 60 * 60 * 1000);
   ensureSheet_(ADMIN_SESSION_SHEET, ["憑證", "建立時間", "到期時間", "狀態"]).appendRow([token, new Date(), expires, "啟用"]);
+  audit_("後台登入", "admin", "登入成功，憑證有效 6 小時");
   return { ok: true, adminToken: token, expires: expires.toISOString() };
 }
 
@@ -205,8 +252,12 @@ function rowToOrder_(row) {
     createdAt: dateText_(row[0]), quoteId: row[1], type: row[2], customer: row[3], contact: row[4],
     payment: row[5], delivery: row[6], subtotal: row[7], discount: row[8], shipping: row[9],
     total: row[10], status: row[11], note: row[12], message: row[13], updatedAt: dateText_(row[14]),
-    adminNote: row[15], trackingNumber: row[18]
+    adminNote: row[15], trackingNumber: row[18], outOfStockPreference: row[19], actualWeight: number_(row[20]), actualShipping: number_(row[21]), balanceDue: number_(row[22]), paymentStatus: row[23] || "未付款"
   };
+}
+
+function audit_(action, reference, details) {
+  ensureSheet_(AUDIT_LOG_SHEET, ["時間", "操作", "關聯編號", "內容"]).appendRow([new Date(), safe_(action), safe_(reference), safe_(details)]);
 }
 
 function memberRegister_(data) {

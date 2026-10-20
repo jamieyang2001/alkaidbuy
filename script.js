@@ -1068,7 +1068,7 @@ const els = {
   adminName: $("#adminName"), adminCategory: $("#adminCategory"), adminSubcategory: $("#adminSubcategory"), adminPrice: $("#adminPrice"), adminWeight: $("#adminWeight"), adminStock: $("#adminStock"), adminSpec: $("#adminSpec"), adminVariants: $("#adminVariants"), adminStatus: $("#adminStatus"), adminImage: $("#adminImage"), adminDescription: $("#adminDescription"), adminProductList: $("#adminProductList"),
   couponForm: $("#couponForm"), adminCouponCode: $("#adminCouponCode"), adminCouponType: $("#adminCouponType"), adminCouponValue: $("#adminCouponValue"), adminCouponMinimum: $("#adminCouponMinimum"), adminCouponExpiry: $("#adminCouponExpiry"), adminCouponActive: $("#adminCouponActive"), couponAdminList: $("#couponAdminList"),
   settingsForm: $("#settingsForm"), settingShippingMethod: $("#settingShippingMethod"), settingYenRate: $("#settingYenRate"), settingServicePercent: $("#settingServicePercent"), settingMinimumFee: $("#settingMinimumFee"), settingExtraFee: $("#settingExtraFee"), settingNotifyEmail: $("#settingNotifyEmail"), settingSheetUrl: $("#settingSheetUrl"),
-  orderList: $("#orderList"), exportOrders: $("#exportOrders"), clearOrders: $("#clearOrders"),
+  orderList: $("#orderList"), exportOrders: $("#exportOrders"), clearOrders: $("#clearOrders"), supportAdminList: $("#supportAdminList"), refreshSupport: $("#refreshSupport"),
   adminLoginForm: $("#adminLoginForm"), adminPassword: $("#adminPassword"), adminLoginMessage: $("#adminLoginMessage"), adminSection: $("#admin"), adminLogout: $("#adminLogout"),
   lookupForm: $("#lookupForm"), lookupQuoteId: $("#lookupQuoteId"), lookupResult: $("#lookupResult"),
   memberAuth: $("#memberAuth"), memberRegisterForm: $("#memberRegisterForm"), memberLoginForm: $("#memberLoginForm"), memberMessage: $("#memberMessage"), memberDashboard: $("#memberDashboard"), memberWelcome: $("#memberWelcome"), memberEmail: $("#memberEmail"), memberCouponList: $("#memberCouponList"), memberOrderList: $("#memberOrderList"), memberLogout: $("#memberLogout"),
@@ -1632,9 +1632,19 @@ function renderOrders() {
         <div><h3>${order.quoteId} / ${order.type}</h3><p>${order.customer || "未填姓名"}・${order.contact || "未填聯絡方式"}・${order.createdAt}</p></div>
         <select data-index="${index}" aria-label="訂單狀態">${statuses.map((status) => `<option value="${status}" ${order.status === status ? "selected" : ""}>${status}</option>`).join("")}</select>
       </header>
-      <div class="order-admin-fields"><label>物流單號<input data-tracking-index="${index}" value="${escapeHtml(order.trackingNumber || "")}" placeholder="寄出後填寫" /></label><label>店家備註<input data-note-index="${index}" value="${escapeHtml(order.adminNote || "")}" placeholder="顯示給會員" /></label><button class="secondary-button" type="button" data-save-order="${index}">儲存進度</button></div>
+      <div class="order-admin-fields"><label>物流單號<input data-tracking-index="${index}" value="${escapeHtml(order.trackingNumber || "")}" placeholder="寄出後填寫" /></label><label>店家備註<input data-note-index="${index}" value="${escapeHtml(order.adminNote || "")}" placeholder="顯示給會員" /></label><label>包裝後實重 g<input type="number" min="0" data-weight-index="${index}" value="${Number(order.actualWeight || 0)}" /></label><label>實際國際運費 NT$<input type="number" min="0" data-shipping-index="${index}" value="${Number(order.actualShipping || 0)}" /></label><label>待補款 NT$<input type="number" min="0" data-balance-index="${index}" value="${Number(order.balanceDue || 0)}" /></label><label>付款狀態<select data-payment-index="${index}">${["未付款", "待補款", "已付款", "已退款"].map((status) => `<option ${order.paymentStatus === status ? "selected" : ""}>${status}</option>`).join("")}</select></label><button class="secondary-button" type="button" data-save-order="${index}">儲存進度</button></div>
+      <p class="form-note">缺貨處理：${escapeHtml(order.outOfStockPreference || "請先聯絡客人")}</p>
       <textarea readonly>${order.message}</textarea>
     </article>`).join("");
+}
+
+async function loadSupportCases() {
+  if (!els.supportAdminList) return;
+  try {
+    const result = await apiRequest("supportCases", { adminToken: localStorage.getItem(adminTokenKey) }, "GET");
+    const cases = result.cases || [];
+    els.supportAdminList.innerHTML = cases.length ? cases.map((item) => `<article class="order-card"><header><div><h3>${escapeHtml(item.id)} / ${escapeHtml(item.type)}</h3><p>${escapeHtml(item.email)}・訂單 ${escapeHtml(item.quoteId || "未指定")}・${escapeHtml(item.createdAt)}</p></div><select data-support-status="${escapeHtml(item.id)}">${["待處理", "處理中", "等待客人回覆", "已完成", "已拒絕"].map((status) => `<option ${item.status === status ? "selected" : ""}>${status}</option>`).join("")}</select></header><p>${escapeHtml(item.details)}</p>${item.attachment ? `<a href="${escapeHtml(item.attachment)}" target="_blank" rel="noreferrer">查看附件</a>` : ""}<div class="order-admin-fields"><label>客服回覆<input data-support-reply="${escapeHtml(item.id)}" value="${escapeHtml(item.reply || "")}" /></label><button class="secondary-button" data-save-support="${escapeHtml(item.id)}" type="button">儲存並通知客人</button></div></article>`).join("") : '<p class="empty-cart">目前沒有售後案件。</p>';
+  } catch (error) { els.supportAdminList.innerHTML = `<p class="empty-cart">載入失敗：${escapeHtml(error.message)}</p>`; }
 }
 
 function renderLookup(order) {
@@ -1926,11 +1936,28 @@ els.orderList.addEventListener("click", async (event) => {
   const card = button.closest(".order-card");
   orders[index].trackingNumber = card.querySelector("[data-tracking-index]").value.trim();
   orders[index].adminNote = card.querySelector("[data-note-index]").value.trim();
+  orders[index].actualWeight = Number(card.querySelector("[data-weight-index]").value || 0);
+  orders[index].actualShipping = Number(card.querySelector("[data-shipping-index]").value || 0);
+  orders[index].balanceDue = Number(card.querySelector("[data-balance-index]").value || 0);
+  orders[index].paymentStatus = card.querySelector("[data-payment-index]").value;
   save(orderStorageKey, orders);
   try {
     await apiRequest("updateStatus", { quoteId: orders[index].quoteId, status: orders[index].status, adminNote: orders[index].adminNote, trackingNumber: orders[index].trackingNumber, adminToken: localStorage.getItem(adminTokenKey) });
+    await apiRequest("updateFulfillment", { quoteId: orders[index].quoteId, actualWeight: orders[index].actualWeight, actualShipping: orders[index].actualShipping, balanceDue: orders[index].balanceDue, paymentStatus: orders[index].paymentStatus, adminToken: localStorage.getItem(adminTokenKey) });
     button.textContent = "已儲存";
   } catch (error) { showSummary(`進度尚未同步：${error.message}`); }
+});
+
+els.refreshSupport?.addEventListener("click", loadSupportCases);
+els.supportAdminList?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-save-support]");
+  if (!button) return;
+  const id = button.dataset.saveSupport;
+  const card = button.closest(".order-card");
+  try {
+    await apiRequest("supportUpdate", { adminToken: localStorage.getItem(adminTokenKey), supportId: id, status: card.querySelector("[data-support-status]").value, reply: card.querySelector("[data-support-reply]").value.trim() });
+    button.textContent = "已儲存並通知";
+  } catch (error) { showSummary(`售後案件未更新：${error.message}`); }
 });
 
 els.exportOrders.addEventListener("click", exportOrdersCsv);
@@ -1996,6 +2023,7 @@ els.adminLoginForm.addEventListener("submit", async (event) => {
       renderOrders();
       els.adminLoginMessage.textContent = `已登入後台，載入 ${orders.length} 筆雲端訂單。`;
       loadDashboard();
+      loadSupportCases();
     } catch (error) {
       els.adminLoginMessage.textContent = `已登入；雲端訂單尚未連線：${error.message}`;
     }
