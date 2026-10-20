@@ -551,7 +551,7 @@ function updatePurchaseAllocation_(data) {
 function operationsCenter_() {
   const orders = listOrdersWithItems_(), costs = costMap_(), alerts = [], settlements = [], packing = [];
   orders.filter(function(order) { return order.status !== "已取消"; }).forEach(function(order) {
-    const shortages = (order.items || []).reduce(function(sum, item) { return sum + Math.max(0, number_(item.quantity) - number_(item.allocated)) * number_(item.price); }, 0);
+    const shortages = (order.items || []).reduce(function(sum, item) { return ["缺貨", "取消", "停售"].indexOf(String(item.purchaseStatus)) >= 0 ? sum + Math.max(0, number_(item.quantity) - number_(item.allocated)) * number_(item.price) : sum; }, 0);
     const allocatedItems = (order.items || []).filter(function(item) { return number_(item.allocated) > 0; });
     const cost = costs[order.quoteId] || {};
     const revenue = number_(order.total) + number_(order.balanceDue) - shortages;
@@ -637,8 +637,9 @@ function formatSpreadsheet_() {
 }
 
 function authorizeServices() {
+  DriveApp.getFoldersByName("瑤光代購每日備份").hasNext();
   MailApp.sendEmail(NOTIFY_EMAIL, "瑤光代購寄信權限測試", "寄信權限已完成授權，網站通知可以正常寄送。");
-  return "授權完成，測試信已寄出";
+  return "寄信與Google Drive備份權限已完成授權，測試信已寄出";
 }
 
 function dailyBackup_() {
