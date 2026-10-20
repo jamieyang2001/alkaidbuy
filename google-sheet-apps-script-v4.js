@@ -25,6 +25,7 @@ function doGet(e) {
     }
     if (action === "dashboard") { requireAdminToken_(e.parameter.adminToken); return json_({ ok: true, dashboard: dashboard_() }); }
     if (action === "supportCases") { requireAdminToken_(e.parameter.adminToken); return json_({ ok: true, cases: listSupportCases_() }); }
+    if (action === "purchaseSummary") { requireAdminToken_(e.parameter.adminToken); return json_({ ok: true, summary: purchaseSummary_(false) }); }
     return json_({ ok: true, service: "瑤光代購訂單 API", time: new Date().toISOString() });
   } catch (error) {
     return json_({ ok: false, error: error.message });
@@ -49,6 +50,7 @@ function doPost(e) {
     if (action === "catalogSeed") { requireAdminToken_(data.adminToken); return json_(catalogSeed_(data.products || [])); }
     if (action === "installMaintenance") { requireAdminToken_(data.adminToken); return json_(installMaintenance_()); }
     if (action === "formatSpreadsheet") { requireAdminToken_(data.adminToken); return json_(formatSpreadsheet_()); }
+    if (action === "refreshPurchaseSummary") { requireAdminToken_(data.adminToken); return json_({ ok: true, summary: purchaseSummary_(true), message: "總採購清單已更新" }); }
     if (action === "logError") return json_(logError_(data));
     if (action === "updateStatus") {
       requireAdminToken_(data.adminToken);
@@ -443,6 +445,52 @@ function dashboard_() {
   const support = ensureSheet_(SUPPORT_SHEET, ["申請時間", "案件編號", "會員ID", "會員Email", "訂單編號", "類型", "說明", "附件網址", "狀態", "更新時間"]);
   const pendingSupport = support.getLastRow() < 2 ? 0 : support.getRange(2, 9, support.getLastRow() - 1, 1).getValues().filter(function(row) { return String(row[0]) !== "已完成"; }).length;
   return { todayOrders: orders.filter(function(order) { return String(order.createdAt).indexOf(today) === 0; }).length, revenue: active.reduce(function(sum, order) { return sum + number_(order.total); }, 0), statusCounts: statusCounts, products: catalog.length, outOfStock: catalog.filter(function(product) { return product.status === "售完" || Number(product.stock) === 0; }).length, pendingSupport: pendingSupport };
+}
+
+function purchaseSummary_(writeSheet) {
+  const catalog = {};
+  catalogList_().forEach(function(product) { catalog[String(product.id)] = product; });
+  const orders = {};
+  const orderSheet = sheet_(ORDER_SHEET);
+  if (orderSheet.getLastRow() >= 2) {
+    orderSheet.getRange(2, 1, orderSheet.getLastRow() - 1, Math.max(24, orderSheet.getLastColumn())).getValues().forEach(function(row) {
+      orders[String(row[1])] = { customer: String(row[3] || "未填姓名"), contact: String(row[4] || ""), status: String(row[11] || "") };
+    });
+  }
+  const grouped = {};
+  const itemSheet = sheet_(ITEM_SHEET);
+  if (itemSheet.getLastRow() >= 2) {
+    itemSheet.getRange(2, 1, itemSheet.getLastRow() - 1, 12).getValues().forEach(function(row) {
+      const order = orders[String(row[0])];
+      if (!order || order.status === "已取消") return;
+      const product = catalog[String(row[1])] || {};
+      const key = String(row[1]) + "|" + String(row[3] || "標準款");
+      if (!grouped[key]) grouped[key] = { store: String(row[8] || product.category || "其他"), category: String(product.subcategory || row[9] || "未分類"), image: String(row[11] || product.image || ""), name: String(row[2] || product.name || row[1]), variant: String(row[3] || "標準款"), quantity: 0, orderIds: {}, customers: {}, productId: String(row[1] || "") };
+      const item = grouped[key];
+      const quantity = number_(row[4]);
+      item.quantity += quantity;
+      item.orderIds[String(row[0])] = true;
+      const customerKey = order.customer + (order.contact ? "（" + order.contact + "）" : "");
+      item.customers[customerKey] = (item.customers[customerKey] || 0) + quantity;
+    });
+  }
+  const result = Object.keys(grouped).map(function(key) {
+    const item = grouped[key];
+    return { store: item.store, category: item.category, image: item.image, name: item.name, variant: item.variant, quantity: item.quantity, orderCount: Object.keys(item.orderIds).length, customerCount: Object.keys(item.customers).length, customers: Object.keys(item.customers).map(function(name) { return { name: name, quantity: item.customers[name] }; }), productId: item.productId };
+  }).sort(function(a, b) { return a.store.localeCompare(b.store) || a.category.localeCompare(b.category) || a.name.localeCompare(b.name); });
+  if (writeSheet) {
+    const sheet = ensureSheet_("總採購清單", ["店家", "類別", "商品圖片", "商品名稱", "規格", "訂購總數", "訂單數", "購買客人數", "購買客人清單", "商品ID", "更新時間"]);
+    if (sheet.getLastRow() > 1) sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).clearContent();
+    if (result.length) {
+      const now = new Date();
+      const rows = result.map(function(item) { return [item.store, item.category, item.image, item.name, item.variant, item.quantity, item.orderCount, item.customerCount, item.customers.map(function(customer) { return customer.name + " × " + customer.quantity; }).join("\n"), item.productId, now]; });
+      sheet.getRange(2, 1, rows.length, 11).setValues(rows);
+      result.forEach(function(item, index) { if (item.image) sheet.getRange(index + 2, 3).setFormula('=IMAGE("' + item.image.replace(/"/g, '""') + '",4,80,80)'); });
+      sheet.setColumnWidth(3, 100); sheet.setColumnWidth(4, 280); sheet.setColumnWidth(9, 360); sheet.setRowHeights(2, rows.length, 88);
+    }
+    audit_("更新總採購清單", "all", "共 " + result.length + " 個商品規格");
+  }
+  return result;
 }
 
 function sendEmail_(to, subject, body, type, reference) {

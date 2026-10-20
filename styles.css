@@ -506,6 +506,23 @@ input:focus, select:focus, textarea:focus { border-color: var(--green); box-shad
 .order-admin-fields { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
 .admin-operations { margin-bottom: 24px; padding: 22px; background: var(--white); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 12px 34px rgba(24,36,45,.08); }
 .admin-operations h2 { margin: 0 0 16px; }
+.admin-login-section, body:not([data-page="admin"]) .admin-section { display: none !important; }
+.admin-page { max-width: 1500px; }
+.admin-tabs { margin: 24px 0; overflow-x: auto; }
+.admin-category-nav { margin: 18px 0; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); }
+.admin-category-nav .category-card { min-height: 90px; text-align: left; }
+.admin-product-grid { grid-template-columns: repeat(auto-fill,minmax(230px,1fr)); }
+.admin-product-grid .product-card { display: grid; grid-template-rows: 190px 1fr; }
+.admin-product-grid .product-image { height: 190px; background: #fff; }
+.admin-product-grid .product-image img { width: 100%; height: 100%; object-fit: contain; }
+.admin-editor { width: min(760px,calc(100vw - 28px)); }
+.table-scroll { overflow-x: auto; }
+.admin-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+.admin-table th,.admin-table td { padding: 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.admin-table th { background: #eff5f2; position: sticky; top: 0; z-index: 1; }
+.purchase-product { display: grid; grid-template-columns: 72px minmax(160px,1fr); align-items: center; gap: 12px; }
+.purchase-product img { width: 72px; height: 72px; object-fit: contain; background: #fff; border: 1px solid var(--line); border-radius: 6px; }
+@media (max-width:700px){.admin-product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-product-grid .product-card{grid-template-rows:140px 1fr}.admin-product-grid .product-image{height:140px}.admin-page .orders-heading{align-items:flex-start}.admin-page .panel-actions{width:100%}.admin-page .panel-actions input,.admin-page .panel-actions select{min-width:0;width:100%}}
 .dashboard-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
 .dashboard-stats div { padding: 14px; background: #f7f9f7; border: 1px solid var(--line); border-radius: 6px; }
 .dashboard-stats span, .dashboard-stats strong { display: block; }
