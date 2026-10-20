@@ -637,7 +637,8 @@ function formatSpreadsheet_() {
 }
 
 function authorizeServices() {
-  DriveApp.getFoldersByName("瑤光代購每日備份").hasNext();
+  const backupFolders = DriveApp.getFoldersByName("瑤光代購每日備份");
+  if (!backupFolders.hasNext()) DriveApp.createFolder("瑤光代購每日備份");
   MailApp.sendEmail(NOTIFY_EMAIL, "瑤光代購寄信權限測試", "寄信權限已完成授權，網站通知可以正常寄送。");
   return "寄信與Google Drive備份權限已完成授權，測試信已寄出";
 }
