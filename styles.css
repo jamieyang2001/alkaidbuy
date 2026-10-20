@@ -408,7 +408,32 @@ input:focus, select:focus, textarea:focus { border-color: var(--green); box-shad
 .member-order details { margin-top: 10px; }
 .member-order-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); }
 .product-more { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 24px; }
+
+[hidden] { display: none !important; }
+.nav-links a.active, .nav-links a[aria-current="page"] { color: var(--green-dark); border-bottom: 2px solid var(--gold); }
+.subpage-main { min-height: calc(100vh - 150px); padding: 54px 0 72px; background: #f6f8f6; }
+.subpage-heading, .subpage-section, .subpage-summary { width: min(1180px, calc(100% - 36px)); margin-right: auto; margin-left: auto; }
+.subpage-heading { margin-bottom: 28px; }
+.subpage-heading h1 { margin: 4px 0 10px; font-size: clamp(2rem, 4vw, 3.4rem); }
+.subpage-heading > p:last-child { max-width: 680px; margin: 0; color: var(--muted); }
+.subpage-section { margin-top: 0; padding: 30px; background: var(--white); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 12px 34px rgba(24, 36, 45, 0.06); }
+.subpage-section > *, .member-auth > *, .checkout-layout > * { min-width: 0; }
+.subpage-summary { margin-top: 28px; }
+.cart-page-toolbar, .member-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cart-page-toolbar { margin-bottom: 20px; }
+.cart-page-toolbar h2, .checkout-form h2, .member-section h2 { margin: 0; font-size: 1.25rem; }
+.cart-product { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 12px; align-items: start; }
+.cart-product img { width: 76px; height: 76px; object-fit: contain; background: #f7f8f7; border: 1px solid var(--line); border-radius: 6px; }
+.cart-empty-state { padding: 28px 8px; text-align: center; }
+.cart-empty-state p { margin-bottom: 20px; }
+.form-note { margin: 8px 0 0; color: var(--muted); }
+.form-note a { color: var(--green-dark); font-weight: 900; text-decoration: underline; }
+.member-actions { justify-content: flex-end; }
 @media (max-width: 760px) {
   .member-auth, .member-columns { grid-template-columns: 1fr; }
   .member-toolbar { align-items: flex-start; }
+  .subpage-main { padding-top: 30px; }
+  .subpage-section { width: calc(100% - 24px); padding: 18px; }
+  .subpage-heading { width: calc(100% - 32px); }
+  .member-toolbar, .member-actions { align-items: stretch; flex-direction: column; }
 }

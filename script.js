@@ -1033,6 +1033,7 @@ const orderStorageKey = "yaoguang-orders";
 const quoteSequenceKey = "yaoguang-quote-sequence";
 const feeSettingsKey = "yaoguang-fee-settings";
 const couponStorageKey = "yaoguang-coupons";
+const cartStorageKey = "yaoguang-cart-v1";
 const adminAuthKey = "yaoguang-admin-auth";
 const memberSessionKey = "yaoguang-member-session";
 const adminPassword = "tophet1003";
@@ -1073,7 +1074,7 @@ const els = {
 let products = load(productStorageKey, defaultProducts);
 let orders = load(orderStorageKey, []);
 let coupons = load(couponStorageKey, []);
-let cart = [];
+let cart = load(cartStorageKey, []);
 let activeCategory = null;
 let activeCoupon = null;
 let memberSession = load(memberSessionKey, null);
@@ -1379,6 +1380,7 @@ function renderProducts() {
 }
 
 function renderCart() {
+  save(cartStorageKey, cart);
   els.cartItems.innerHTML = cart.length ? cart.map((item) => `
     <div class="cart-row">
       <div><h3>${item.name}</h3><p>規格：${item.selectedVariant || productSpec(item)}・單價 ${money(item.price)}・數量 ${item.quantity}</p><strong>小計 ${money(item.price * item.quantity)}</strong></div>

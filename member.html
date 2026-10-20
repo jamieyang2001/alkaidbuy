@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>會員中心 | 瑤光代購</title>
+    <meta name="description" content="登入瑤光代購會員中心，查看訂單、購物明細與折價券。" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="member">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="瑤光代購首頁"><span class="brand-mark">瑤</span><span>瑤光代購</span></a>
+      <nav class="nav-links" aria-label="主要導覽">
+        <a href="index.html#products">商品</a><a href="index.html#special">代訂</a><a href="index.html#shipping">運費</a><a href="cart.html">購物車</a>
+        <a class="active" href="member.html" aria-current="page">會員</a><a href="index.html#lookup">查詢</a><a href="index.html#faq">FAQ</a>
+      </nav>
+      <a class="line-button" href="https://lin.ee/NxJLmwO" target="_blank" rel="noreferrer">LINE</a>
+    </header>
+    <main class="subpage-main">
+      <section class="subpage-heading"><p class="eyebrow">Member Center</p><h1>會員中心</h1><p>管理自己的訂單明細、歷史紀錄與會員折價券。</p></section>
+      <section class="section member-section subpage-section">
+        <div class="member-auth" id="memberAuth">
+          <form class="request-form" id="memberRegisterForm">
+            <div class="full"><p class="eyebrow">Register</p><h2>申請會員</h2></div>
+            <label>姓名<input id="memberRegisterName" type="text" autocomplete="name" required /></label>
+            <label>Email<input id="memberRegisterEmail" type="email" autocomplete="email" required /></label>
+            <label class="full">密碼<input id="memberRegisterPassword" type="password" minlength="8" autocomplete="new-password" required /></label>
+            <button class="primary-button form-submit" type="submit">建立會員帳號</button>
+          </form>
+          <form class="request-form" id="memberLoginForm">
+            <div class="full"><p class="eyebrow">Login</p><h2>會員登入</h2></div>
+            <label class="full">Email<input id="memberLoginEmail" type="email" autocomplete="email" required /></label>
+            <label class="full">密碼<input id="memberLoginPassword" type="password" autocomplete="current-password" required /></label>
+            <button class="primary-button form-submit" type="submit">登入會員中心</button>
+          </form>
+        </div>
+        <p class="member-message" id="memberMessage" role="status"></p>
+        <div class="member-dashboard" id="memberDashboard" hidden>
+          <div class="member-toolbar"><div><p class="eyebrow">My Account</p><h2 id="memberWelcome">會員您好</h2><p id="memberEmail"></p></div><div class="member-actions"><a class="primary-button" href="cart.html">前往購物車</a><button class="secondary-button" id="memberLogout" type="button">登出</button></div></div>
+          <div class="member-columns"><section><h2>我的折價券</h2><div id="memberCouponList" class="member-coupon-list"></div></section><section><h2>訂單與購物明細</h2><div id="memberOrderList" class="member-order-list"></div></section></div>
+        </div>
+      </section>
+    </main>
+    <nav class="mobile-tabbar" aria-label="手機快速操作"><a href="index.html#products">商品</a><a href="index.html#special">詢問</a><a href="cart.html">購物車</a><a href="member.html" aria-current="page">會員</a></nav>
+    <footer class="site-footer"><span>瑤光代購</span><span>IG @alkaidbuy・alkaidbuy@gmail.com</span></footer>
+    <script src="account-pages.js"></script>
+  </body>
+</html>

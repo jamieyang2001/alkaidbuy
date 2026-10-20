@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>購物車與結帳 | 瑤光代購</title>
+    <meta name="description" content="查看瑤光代購購物車、套用折價券並送出訂單。" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="cart">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="瑤光代購首頁"><span class="brand-mark">瑤</span><span>瑤光代購</span></a>
+      <nav class="nav-links" aria-label="主要導覽">
+        <a href="index.html#products">商品</a><a href="index.html#special">代訂</a><a href="index.html#shipping">運費</a>
+        <a class="active" href="cart.html" aria-current="page">購物車</a><a href="member.html">會員</a><a href="index.html#lookup">查詢</a><a href="index.html#faq">FAQ</a>
+      </nav>
+      <a class="line-button" href="https://lin.ee/NxJLmwO" target="_blank" rel="noreferrer">LINE</a>
+    </header>
+
+    <main class="subpage-main">
+      <section class="subpage-heading">
+        <p class="eyebrow">Cart & Checkout</p>
+        <h1>購物車與結帳</h1>
+        <p>確認商品規格、數量與預估運費後送出訂單。</p>
+      </section>
+      <section class="section cart-section subpage-section">
+        <div class="checkout-layout">
+          <div class="cart-panel">
+            <div class="cart-page-toolbar"><h2>購物明細</h2><a class="secondary-button" href="index.html#products">繼續選購</a></div>
+            <div id="cartItems" class="cart-items"></div>
+            <div class="cart-estimate">
+              <div><span>商品重量</span><strong id="cartWeight">0g</strong></div>
+              <div><span>商品小計</span><strong id="cartSubtotal">NT$0</strong></div>
+              <div><span>優惠折抵</span><strong id="cartDiscount">-NT$0</strong></div>
+              <div><span>預估國際運費</span><strong id="cartShipping">NT$0</strong></div>
+            </div>
+            <div class="coupon-entry"><input id="couponCode" type="text" placeholder="輸入優惠券代碼" /><button class="secondary-button" id="applyCoupon" type="button">套用</button></div>
+            <p class="coupon-message" id="couponMessage" role="status"></p>
+            <div class="cart-total"><span>預估合計</span><strong id="cartTotal">NT$0</strong></div>
+          </div>
+          <form class="request-form checkout-form" id="checkoutForm">
+            <div class="full"><p class="eyebrow">Order</p><h2>收件與付款資料</h2><p class="form-note" id="memberCheckoutHint"></p></div>
+            <label>姓名<input id="orderName" type="text" autocomplete="name" required /></label>
+            <label>聯絡方式<input id="orderContact" type="text" placeholder="LINE ID / IG / Email" required /></label>
+            <label>付款方式<select id="paymentMethod" required><option value="銀行轉帳">銀行轉帳</option><option value="LINE Pay">LINE Pay</option><option value="到店付款">到店付款</option></select></label>
+            <label>取貨方式<select id="deliveryMethod" required><option value="宅配">宅配</option><option value="超商取貨">超商取貨</option><option value="面交">面交</option></select></label>
+            <label class="full">備註<textarea id="orderNote" rows="4" placeholder="地址、希望到貨時間或其他備註"></textarea></label>
+            <button class="primary-button form-submit" id="submitOrder" type="submit">確認並送出訂單</button>
+          </form>
+        </div>
+      </section>
+      <section class="summary-panel subpage-summary" id="summaryPanel" hidden>
+        <div><p class="eyebrow">Order Result</p><h2>訂單送出結果</h2></div>
+        <textarea id="summaryText" rows="10" readonly></textarea>
+        <div class="summary-actions"><button class="secondary-button" id="copyButton" type="button">複製內容</button><a class="secondary-button" id="emailNotifyButton" href="#">寄 Email 通知</a><a class="line-button" id="summaryLineButton" href="https://lin.ee/NxJLmwO" target="_blank" rel="noreferrer">用 LINE 聯絡</a></div>
+      </section>
+    </main>
+    <nav class="mobile-tabbar" aria-label="手機快速操作"><a href="index.html#products">商品</a><a href="index.html#special">詢問</a><a href="cart.html" aria-current="page">購物車</a><a href="member.html">會員</a></nav>
+    <footer class="site-footer"><span>瑤光代購</span><span>IG @alkaidbuy・alkaidbuy@gmail.com</span></footer>
+    <script src="account-pages.js"></script>
+  </body>
+</html>
