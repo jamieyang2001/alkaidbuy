@@ -108,8 +108,8 @@ function renderAddresses() {
 
 function syncMemberData() {
   const token = currentSession()?.token;
-  if (!token) return;
-  apiRequest("memberDataSave", { token, favorites: load(FAVORITE_KEY, []), recent: load(RECENT_KEY, []), addresses: load(ADDRESS_KEY, []), notices: load(NOTICE_KEY, {}), cart: load(CART_KEY, []), snapshots: load(SNAPSHOT_KEY, {}) }).catch(() => {});
+  if (!token) return Promise.resolve();
+  return apiRequest("memberDataSave", { token, favorites: load(FAVORITE_KEY, []), recent: load(RECENT_KEY, []), addresses: load(ADDRESS_KEY, []), notices: load(NOTICE_KEY, {}), cart: load(CART_KEY, []), snapshots: load(SNAPSHOT_KEY, {}) }).catch(() => {});
 }
 
 function showLoggedOut(message = "") {
@@ -345,6 +345,15 @@ async function initCartPage() {
     renderCart();
   });
   $("#applyCoupon").addEventListener("click", applyCoupon);
+  $("#clearCart").addEventListener("click", async () => {
+    if (cart.length && !confirm("確定要清空購物車嗎？")) return;
+    cart = [];
+    activeCoupon = null;
+    save(CART_KEY, cart);
+    await syncMemberData();
+    renderCart();
+    $("#couponMessage").textContent = "購物車已清空。";
+  });
   $("#couponCode").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); applyCoupon(); } });
   $("#checkoutForm").addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -365,6 +374,7 @@ async function initCartPage() {
       save(ORDER_KEY, localOrders);
       cart = [];
       save(CART_KEY, cart);
+      await syncMemberData();
       renderCart();
       showCheckoutStage(4);
       document.querySelectorAll("#checkoutSteps li").forEach((item) => item.classList.add("active"));
