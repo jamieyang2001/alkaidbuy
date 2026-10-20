@@ -13,6 +13,9 @@ const EMAIL_LOG_SHEET = "Email紀錄";
 const ERROR_LOG_SHEET = "網站錯誤";
 const AUDIT_LOG_SHEET = "後台操作紀錄";
 const PURCHASE_ALLOCATION_SHEET = "採購分配";
+const PACKAGE_SHEET = "日本包裹";
+const COST_SHEET = "成本紀錄";
+const STOCK_SHEET = "現貨庫存";
 
 function doGet(e) {
   const action = String((e.parameter && e.parameter.action) || "health");
@@ -27,6 +30,8 @@ function doGet(e) {
     if (action === "dashboard") { requireAdminToken_(e.parameter.adminToken); return json_({ ok: true, dashboard: dashboard_() }); }
     if (action === "supportCases") { requireAdminToken_(e.parameter.adminToken); return json_({ ok: true, cases: listSupportCases_() }); }
     if (action === "purchaseSummary") { requireAdminToken_(e.parameter.adminToken); return json_({ ok: true, summary: purchaseSummary_(false) }); }
+    if (action === "operationsCenter") { requireAdminToken_(e.parameter.adminToken); return json_({ ok: true, data: operationsCenter_() }); }
+    if (action === "backupList") { requireAdminToken_(e.parameter.adminToken); return json_({ ok: true, backups: backupList_() }); }
     return json_({ ok: true, service: "瑤光代購訂單 API", time: new Date().toISOString() });
   } catch (error) {
     return json_({ ok: false, error: error.message });
@@ -53,6 +58,13 @@ function doPost(e) {
     if (action === "formatSpreadsheet") { requireAdminToken_(data.adminToken); return json_(formatSpreadsheet_()); }
     if (action === "refreshPurchaseSummary") { requireAdminToken_(data.adminToken); return json_({ ok: true, summary: purchaseSummary_(true), message: "總採購清單已更新" }); }
     if (action === "updatePurchaseAllocation") { requireAdminToken_(data.adminToken); return json_(updatePurchaseAllocation_(data)); }
+    if (action === "batchPurchaseStatus") { requireAdminToken_(data.adminToken); return json_(batchPurchaseStatus_(data)); }
+    if (action === "packageSave") { requireAdminToken_(data.adminToken); return json_(packageSave_(data)); }
+    if (action === "costSave") { requireAdminToken_(data.adminToken); return json_(costSave_(data)); }
+    if (action === "stockSave") { requireAdminToken_(data.adminToken); return json_(stockSave_(data)); }
+    if (action === "sendPurchaseNotice") { requireAdminToken_(data.adminToken); return json_(sendPurchaseNotice_(data.quoteId)); }
+    if (action === "createBackup") { requireAdminToken_(data.adminToken); dailyBackup_(); return json_({ ok: true, message: "備份已建立" }); }
+    if (action === "restoreBackup") { requireAdminToken_(data.adminToken); return json_(restoreBackup_(data)); }
     if (action === "logError") return json_(logError_(data));
     if (action === "updateStatus") {
       requireAdminToken_(data.adminToken);
@@ -536,6 +548,46 @@ function updatePurchaseAllocation_(data) {
   return { ok: true, purchasedQuantity: purchasedQuantity, allocatedQuantity: totalAllocated };
 }
 
+function operationsCenter_() {
+  const orders = listOrdersWithItems_(), costs = costMap_(), alerts = [], settlements = [], packing = [];
+  orders.filter(function(order) { return order.status !== "已取消"; }).forEach(function(order) {
+    const shortages = (order.items || []).reduce(function(sum, item) { return sum + Math.max(0, number_(item.quantity) - number_(item.allocated)) * number_(item.price); }, 0);
+    const allocatedItems = (order.items || []).filter(function(item) { return number_(item.allocated) > 0; });
+    const cost = costs[order.quoteId] || {};
+    const revenue = number_(order.total) + number_(order.balanceDue) - shortages;
+    const totalCost = number_(cost.productCostTwd) + number_(cost.domesticShipping) + number_(cost.internationalShipping) + number_(cost.otherCost);
+    settlements.push({ quoteId: order.quoteId, customer: order.customer, contact: order.contact, shortageRefund: shortages, balanceDue: number_(order.balanceDue), paymentStatus: order.paymentStatus, revenue: revenue, cost: totalCost, profit: revenue - totalCost });
+    packing.push({ quoteId: order.quoteId, customer: order.customer, contact: order.contact, delivery: order.delivery, trackingNumber: order.trackingNumber, items: allocatedItems });
+    if (shortages > 0) alerts.push({ level: "warning", quoteId: order.quoteId, message: "有缺貨商品，預估應退款 " + shortages + " 元" });
+    if (number_(order.balanceDue) > 0 && order.paymentStatus !== "已付款") alerts.push({ level: "warning", quoteId: order.quoteId, message: "待補款 " + order.balanceDue + " 元" });
+    if (!order.delivery || String(order.delivery).indexOf("未填") >= 0) alerts.push({ level: "danger", quoteId: order.quoteId, message: "尚未填寫完整收件資料" });
+    (order.items || []).forEach(function(item) { if (!item.allocated && item.purchaseStatus === "待採購") alerts.push({ level: "info", quoteId: order.quoteId, message: item.name + " 尚未採購分配" }); });
+  });
+  return { settlements: settlements, packing: packing, alerts: alerts, packages: packageList_(), stock: stockList_(), costs: costs };
+}
+
+function batchPurchaseStatus_(data) {
+  const keys = Array.isArray(data.keys) ? data.keys : [], allowed = ["待採購", "部分到貨", "已買齊", "缺貨", "停售", "需確認"];
+  if (!keys.length || allowed.indexOf(data.status) < 0) throw new Error("請選擇商品與批次狀態");
+  const sheet = ensureSheet_(PURCHASE_ALLOCATION_SHEET, ["商品ID", "規格", "已採購數", "採購狀態", "備註", "分配JSON", "更新時間"]), saved = purchaseAllocationMap_();
+  keys.forEach(function(key) { const parts = String(key).split("|"), productId = parts.shift(), variant = parts.join("|"), current = saved[key] || { purchasedQuantity: 0, allocations: {} }; const values = [productId, variant, number_(current.purchasedQuantity), data.status, safe_(data.note), JSON.stringify(current.allocations || {}), new Date()]; const matches = sheet.getLastRow() < 2 ? [] : sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).createTextFinder(productId).matchEntireCell(true).findAll(); const cell = matches.filter(function(found) { return String(sheet.getRange(found.getRow(), 2).getValue()) === variant; })[0]; if (cell) sheet.getRange(cell.getRow(), 1, 1, 7).setValues([values]); else sheet.appendRow(values); });
+  purchaseSummary_(true); audit_("批次採購狀態", "商品" + keys.length + "件", data.status); return { ok: true, count: keys.length };
+}
+
+function packageSave_(data) {
+  const id = String(data.packageId || "JP-" + Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyyMMdd-HHmm"));
+  const sheet = ensureSheet_(PACKAGE_SHEET, ["箱號", "狀態", "寄送方式", "實重g", "物流單號", "訂單編號", "內容", "更新時間"]);
+  const values = [id, safe_(data.status || "日本集貨中"), safe_(data.shippingMethod), number_(data.weight), safe_(data.trackingNumber), safe_((data.quoteIds || []).join(",")), JSON.stringify(data.items || []), new Date()];
+  const cell = sheet.getLastRow() < 2 ? null : sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).createTextFinder(id).matchEntireCell(true).findNext(); if (cell) sheet.getRange(cell.getRow(), 1, 1, 8).setValues([values]); else sheet.appendRow(values);
+  audit_("儲存日本包裹", id, data.status); return { ok: true, packageId: id };
+}
+function packageList_() { const sheet = ensureSheet_(PACKAGE_SHEET, ["箱號", "狀態", "寄送方式", "實重g", "物流單號", "訂單編號", "內容", "更新時間"]); if (sheet.getLastRow() < 2) return []; return sheet.getRange(2,1,sheet.getLastRow()-1,8).getValues().reverse().map(function(r){return {packageId:r[0],status:r[1],shippingMethod:r[2],weight:number_(r[3]),trackingNumber:r[4],quoteIds:String(r[5]||"").split(",").filter(Boolean),items:parseJson_(r[6],[]),updatedAt:dateText_(r[7])};}); }
+function costMap_() { const sheet=ensureSheet_(COST_SHEET,["訂單編號","商品成本台幣","日本國內運費","國際運費","其他成本","日幣匯率","更新時間"]),result={}; if(sheet.getLastRow()<2)return result; sheet.getRange(2,1,sheet.getLastRow()-1,7).getValues().forEach(function(r){result[String(r[0])]={productCostTwd:number_(r[1]),domesticShipping:number_(r[2]),internationalShipping:number_(r[3]),otherCost:number_(r[4]),yenRate:number_(r[5])};});return result; }
+function costSave_(data) { const sheet=ensureSheet_(COST_SHEET,["訂單編號","商品成本台幣","日本國內運費","國際運費","其他成本","日幣匯率","更新時間"]),id=String(data.quoteId),values=[id,number_(data.productCostTwd),number_(data.domesticShipping),number_(data.internationalShipping),number_(data.otherCost),number_(data.yenRate),new Date()],cell=sheet.getLastRow()<2?null:sheet.getRange(2,1,sheet.getLastRow()-1,1).createTextFinder(id).matchEntireCell(true).findNext();if(cell)sheet.getRange(cell.getRow(),1,1,7).setValues([values]);else sheet.appendRow(values);return {ok:true}; }
+function stockSave_(data) { const sheet=ensureSheet_(STOCK_SHEET,["商品ID","商品名稱","圖片","規格","現貨數量","售價","狀態","更新時間"]),id=String(data.productId),values=[id,safe_(data.name),safe_(data.image),safe_(data.variant),number_(data.quantity),number_(data.price),safe_(data.status||"販售中"),new Date()],cell=sheet.getLastRow()<2?null:sheet.getRange(2,1,sheet.getLastRow()-1,1).createTextFinder(id).matchEntireCell(true).findNext();if(cell)sheet.getRange(cell.getRow(),1,1,8).setValues([values]);else sheet.appendRow(values);return {ok:true}; }
+function stockList_(){const sheet=ensureSheet_(STOCK_SHEET,["商品ID","商品名稱","圖片","規格","現貨數量","售價","狀態","更新時間"]);if(sheet.getLastRow()<2)return[];return sheet.getRange(2,1,sheet.getLastRow()-1,8).getValues().map(function(r){return{productId:r[0],name:r[1],image:r[2],variant:r[3],quantity:number_(r[4]),price:number_(r[5]),status:r[6],updatedAt:dateText_(r[7])};});}
+function sendPurchaseNotice_(quoteId){const order=listOrdersWithItems_().filter(function(item){return item.quoteId===quoteId;})[0];if(!order)throw new Error("找不到訂單");const email=String(order.contact||"");if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))throw new Error("客人聯絡方式不是Email");const lines=(order.items||[]).map(function(item){return item.name+"：分配 "+item.allocated+"/"+item.quantity+"（"+item.purchaseStatus+"）";}).join("\n");sendEmail_(email,"瑤光代購採購進度："+quoteId,"訂單編號："+quoteId+"\n\n"+lines+"\n\n會員中心：https://alkaidbuy.vercel.app/member.html","採購進度",quoteId);return{ok:true};}
+
 function sendEmail_(to, subject, body, type, reference) {
   const sheet = ensureSheet_(EMAIL_LOG_SHEET, ["時間", "類型", "關聯編號", "收件者", "主旨", "狀態", "錯誤"]);
   try { MailApp.sendEmail(to, subject, body); sheet.appendRow([new Date(), type, reference, to, subject, "成功", ""]); }
@@ -598,6 +650,19 @@ function dailyBackup_() {
   while (iterator.hasNext()) files.push(iterator.next());
   files.sort(function(a, b) { return b.getDateCreated() - a.getDateCreated(); });
   files.slice(30).forEach(function(oldFile) { oldFile.setTrashed(true); });
+}
+
+function backupList_() {
+  const folders = DriveApp.getFoldersByName("瑤光代購每日備份"); if (!folders.hasNext()) return [];
+  const files = [], iterator = folders.next().getFiles(); while (iterator.hasNext()) { const file = iterator.next(); files.push({ id: file.getId(), name: file.getName(), createdAt: dateText_(file.getDateCreated()) }); }
+  return files.sort(function(a,b){return b.createdAt.localeCompare(a.createdAt);}).slice(0,30);
+}
+function restoreBackup_(data) {
+  if (String(data.confirmation) !== "RESTORE") throw new Error("還原確認文字不正確");
+  const source = SpreadsheetApp.openById(String(data.fileId)), target = SpreadsheetApp.openById(SPREADSHEET_ID);
+  dailyBackup_();
+  source.getSheets().forEach(function(sourceSheet){ let targetSheet=target.getSheetByName(sourceSheet.getName()); if(!targetSheet)targetSheet=target.insertSheet(sourceSheet.getName()); targetSheet.clear(); const range=sourceSheet.getDataRange(); if(range.getNumRows()&&range.getNumColumns())targetSheet.getRange(1,1,range.getNumRows(),range.getNumColumns()).setValues(range.getValues()); });
+  audit_("還原備份", data.fileId, source.getName()); return {ok:true,message:"已還原「"+source.getName()+"」，還原前資料也已自動備份"};
 }
 
 function passwordHash_(password, salt) {
