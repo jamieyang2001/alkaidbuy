@@ -12,6 +12,7 @@ const CATALOG_SHEET = "商品雲端資料";
 const EMAIL_LOG_SHEET = "Email紀錄";
 const ERROR_LOG_SHEET = "網站錯誤";
 const AUDIT_LOG_SHEET = "後台操作紀錄";
+const PURCHASE_ALLOCATION_SHEET = "採購分配";
 
 function doGet(e) {
   const action = String((e.parameter && e.parameter.action) || "health");
@@ -21,7 +22,7 @@ function doGet(e) {
     if (action === "catalog") return json_({ ok: true, products: catalogList_() });
     if (action === "orders") {
       requireAdminToken_(e.parameter.adminToken);
-      return json_({ ok: true, orders: listOrders_() });
+      return json_({ ok: true, orders: listOrdersWithItems_() });
     }
     if (action === "dashboard") { requireAdminToken_(e.parameter.adminToken); return json_({ ok: true, dashboard: dashboard_() }); }
     if (action === "supportCases") { requireAdminToken_(e.parameter.adminToken); return json_({ ok: true, cases: listSupportCases_() }); }
@@ -51,6 +52,7 @@ function doPost(e) {
     if (action === "installMaintenance") { requireAdminToken_(data.adminToken); return json_(installMaintenance_()); }
     if (action === "formatSpreadsheet") { requireAdminToken_(data.adminToken); return json_(formatSpreadsheet_()); }
     if (action === "refreshPurchaseSummary") { requireAdminToken_(data.adminToken); return json_({ ok: true, summary: purchaseSummary_(true), message: "總採購清單已更新" }); }
+    if (action === "updatePurchaseAllocation") { requireAdminToken_(data.adminToken); return json_(updatePurchaseAllocation_(data)); }
     if (action === "logError") return json_(logError_(data));
     if (action === "updateStatus") {
       requireAdminToken_(data.adminToken);
@@ -119,6 +121,20 @@ function updateStatus_(quoteId, status, adminNote, trackingNumber) {
   notifyOrderStatus_(updated);
   audit_("更新訂單狀態", quoteId, status);
   return { ok: true, quoteId: quoteId, status: status };
+}
+
+function listOrdersWithItems_() {
+  const orders = listOrders_(), byId = {};
+  orders.forEach(function(order) { order.items = []; byId[String(order.quoteId)] = order; });
+  const allocations = purchaseAllocationMap_();
+  const itemSheet = sheet_(ITEM_SHEET);
+  if (itemSheet.getLastRow() >= 2) itemSheet.getRange(2, 1, itemSheet.getLastRow() - 1, 12).getValues().forEach(function(row) {
+    const order = byId[String(row[0])]; if (!order) return;
+    const key = String(row[1]) + "|" + String(row[3] || "標準款");
+    const allocation = allocations[key], line = allocation && allocation.allocations[String(row[0])] || {};
+    order.items.push({ id: row[1], name: row[2], variant: row[3], quantity: number_(row[4]), price: number_(row[5]), subtotal: number_(row[6]), weight: number_(row[7]), category: row[8], status: row[9], sourceUrl: row[10], image: row[11], allocated: number_(line.allocated), purchaseStatus: line.status || (allocation && allocation.status) || "待採購", purchaseNote: allocation && allocation.note || "" });
+  });
+  return orders;
 }
 
 function updateFulfillment_(data) {
@@ -457,7 +473,7 @@ function purchaseSummary_(writeSheet) {
       orders[String(row[1])] = { customer: String(row[3] || "未填姓名"), contact: String(row[4] || ""), status: String(row[11] || "") };
     });
   }
-  const grouped = {};
+  const grouped = {}, savedAllocations = purchaseAllocationMap_();
   const itemSheet = sheet_(ITEM_SHEET);
   if (itemSheet.getLastRow() >= 2) {
     itemSheet.getRange(2, 1, itemSheet.getLastRow() - 1, 12).getValues().forEach(function(row) {
@@ -465,32 +481,59 @@ function purchaseSummary_(writeSheet) {
       if (!order || order.status === "已取消") return;
       const product = catalog[String(row[1])] || {};
       const key = String(row[1]) + "|" + String(row[3] || "標準款");
-      if (!grouped[key]) grouped[key] = { store: String(row[8] || product.category || "其他"), category: String(product.subcategory || row[9] || "未分類"), image: String(row[11] || product.image || ""), name: String(row[2] || product.name || row[1]), variant: String(row[3] || "標準款"), quantity: 0, orderIds: {}, customers: {}, productId: String(row[1] || "") };
+      if (!grouped[key]) grouped[key] = { store: String(row[8] || product.category || "其他"), category: String(product.subcategory || row[9] || "未分類"), image: String(row[11] || product.image || ""), name: String(row[2] || product.name || row[1]), variant: String(row[3] || "標準款"), quantity: 0, orderIds: {}, customers: {}, demandLines: [], productId: String(row[1] || "") };
       const item = grouped[key];
       const quantity = number_(row[4]);
       item.quantity += quantity;
       item.orderIds[String(row[0])] = true;
       const customerKey = order.customer + (order.contact ? "（" + order.contact + "）" : "");
       item.customers[customerKey] = (item.customers[customerKey] || 0) + quantity;
+      item.demandLines.push({ quoteId: String(row[0]), customer: order.customer, contact: order.contact, quantity: quantity });
     });
   }
   const result = Object.keys(grouped).map(function(key) {
     const item = grouped[key];
-    return { store: item.store, category: item.category, image: item.image, name: item.name, variant: item.variant, quantity: item.quantity, orderCount: Object.keys(item.orderIds).length, customerCount: Object.keys(item.customers).length, customers: Object.keys(item.customers).map(function(name) { return { name: name, quantity: item.customers[name] }; }), productId: item.productId };
+    const saved = savedAllocations[item.productId + "|" + item.variant] || { purchasedQuantity: 0, status: "待採購", note: "", allocations: {} };
+    const lines = item.demandLines.map(function(line) { const allocation = saved.allocations[line.quoteId] || {}; return { quoteId: line.quoteId, customer: line.customer, contact: line.contact, quantity: line.quantity, allocated: number_(allocation.allocated), status: allocation.status || "待分配" }; });
+    return { store: item.store, category: item.category, image: item.image, name: item.name, variant: item.variant, quantity: item.quantity, purchasedQuantity: number_(saved.purchasedQuantity), purchaseStatus: saved.status || "待採購", note: saved.note || "", orderCount: Object.keys(item.orderIds).length, customerCount: Object.keys(item.customers).length, customers: Object.keys(item.customers).map(function(name) { return { name: name, quantity: item.customers[name] }; }), demandLines: lines, productId: item.productId };
   }).sort(function(a, b) { return a.store.localeCompare(b.store) || a.category.localeCompare(b.category) || a.name.localeCompare(b.name); });
   if (writeSheet) {
-    const sheet = ensureSheet_("總採購清單", ["店家", "類別", "商品圖片", "商品名稱", "規格", "訂購總數", "訂單數", "購買客人數", "購買客人清單", "商品ID", "更新時間"]);
+    const sheet = ensureSheet_("總採購清單", ["店家", "類別", "商品圖片", "商品名稱", "規格", "需求總數", "已採購數", "採購狀態", "訂單數", "購買客人數", "購買客人與分配", "備註", "商品ID", "更新時間"]);
     if (sheet.getLastRow() > 1) sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).clearContent();
     if (result.length) {
       const now = new Date();
-      const rows = result.map(function(item) { return [item.store, item.category, item.image, item.name, item.variant, item.quantity, item.orderCount, item.customerCount, item.customers.map(function(customer) { return customer.name + " × " + customer.quantity; }).join("\n"), item.productId, now]; });
-      sheet.getRange(2, 1, rows.length, 11).setValues(rows);
+      const rows = result.map(function(item) { return [item.store, item.category, item.image, item.name, item.variant, item.quantity, item.purchasedQuantity, item.purchaseStatus, item.orderCount, item.customerCount, item.demandLines.map(function(line) { return line.customer + " 需求" + line.quantity + "／分配" + line.allocated + "（" + line.status + "）"; }).join("\n"), item.note, item.productId, now]; });
+      sheet.getRange(2, 1, rows.length, 14).setValues(rows);
       result.forEach(function(item, index) { if (item.image) sheet.getRange(index + 2, 3).setFormula('=IMAGE("' + item.image.replace(/"/g, '""') + '",4,80,80)'); });
-      sheet.setColumnWidth(3, 100); sheet.setColumnWidth(4, 280); sheet.setColumnWidth(9, 360); sheet.setRowHeights(2, rows.length, 88);
+      sheet.setColumnWidth(3, 100); sheet.setColumnWidth(4, 280); sheet.setColumnWidth(11, 420); sheet.setRowHeights(2, rows.length, 88);
     }
     audit_("更新總採購清單", "all", "共 " + result.length + " 個商品規格");
   }
   return result;
+}
+
+function purchaseAllocationMap_() {
+  const sheet = ensureSheet_(PURCHASE_ALLOCATION_SHEET, ["商品ID", "規格", "已採購數", "採購狀態", "備註", "分配JSON", "更新時間"]), result = {};
+  if (sheet.getLastRow() < 2) return result;
+  sheet.getRange(2, 1, sheet.getLastRow() - 1, 7).getValues().forEach(function(row) { result[String(row[0]) + "|" + String(row[1])] = { row: row, purchasedQuantity: number_(row[2]), status: String(row[3] || "待採購"), note: String(row[4] || ""), allocations: parseJson_(row[5], {}) }; });
+  return result;
+}
+
+function updatePurchaseAllocation_(data) {
+  const productId = String(data.productId || ""), variant = String(data.variant || "標準款"), purchasedQuantity = Math.max(0, number_(data.purchasedQuantity));
+  const allowed = ["待採購", "部分到貨", "已買齊", "缺貨", "停售", "需確認"];
+  if (!productId || allowed.indexOf(data.purchaseStatus) < 0) throw new Error("採購資料不完整");
+  const allocations = {}, lines = Array.isArray(data.allocations) ? data.allocations : [], totalAllocated = lines.reduce(function(sum, line) {
+    const allocated = Math.max(0, number_(line.allocated)); if (allocated > number_(line.quantity)) throw new Error("分配數量不可超過客人需求");
+    allocations[String(line.quoteId)] = { allocated: allocated, status: String(line.status || (allocated ? "已分配" : "待分配")) }; return sum + allocated;
+  }, 0);
+  if (totalAllocated > purchasedQuantity) throw new Error("分配總數不可超過實際採購數量");
+  const sheet = ensureSheet_(PURCHASE_ALLOCATION_SHEET, ["商品ID", "規格", "已採購數", "採購狀態", "備註", "分配JSON", "更新時間"]);
+  const cell = sheet.getLastRow() < 2 ? null : sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).createTextFinder(productId).matchEntireCell(true).findAll().filter(function(found) { return String(sheet.getRange(found.getRow(), 2).getValue()) === variant; })[0];
+  const values = [productId, variant, purchasedQuantity, data.purchaseStatus, safe_(data.note), JSON.stringify(allocations), new Date()];
+  if (cell) sheet.getRange(cell.getRow(), 1, 1, 7).setValues([values]); else sheet.appendRow(values);
+  purchaseSummary_(true); audit_("更新採購分配", productId, variant + " / 採購" + purchasedQuantity + " / 分配" + totalAllocated);
+  return { ok: true, purchasedQuantity: purchasedQuantity, allocatedQuantity: totalAllocated };
 }
 
 function sendEmail_(to, subject, body, type, reference) {
