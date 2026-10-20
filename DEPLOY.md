@@ -11,26 +11,26 @@
 5. Output Directory 留空或填 `.`
 6. Deploy
 
-## Google Sheet 訂單同步
+## Google Sheet 正式訂單系統
 
-1. 建立一個 Google Sheet
-2. 到「擴充功能」→「Apps Script」
-3. 貼上 `google-sheet-apps-script.js` 的內容
-4. 部署 → 新增部署作業 → 類型選「網頁應用程式」
-5. 執行身分選「我」
-6. 存取權選「任何人」
-7. 複製 Web App URL
-8. 回到網站後台，貼到「Google Sheet Web App URL」
+正式試算表：[瑤光代購訂單](https://docs.google.com/spreadsheets/d/1-Klx-aoddtkW9z9eTdUT4Yy_LOZ7fgHHK-ifWEkf3-8/edit)
 
-之後產生報價或詢問紀錄時，網站會同步送到 Google Sheet。
+1. 開啟正式試算表，到「擴充功能」→「Apps Script」。
+2. 將 `google-sheet-apps-script.js` 的全部內容貼到 `程式碼.gs`，取代舊內容並儲存。
+3. 點右上角「部署」→「新增部署作業」。
+4. 類型選「網頁應用程式」，執行身分選「我」，存取權選「任何人」。
+5. 點「部署」，完成 Google 授權後複製結尾是 `/exec` 的網址。
+6. 將網址寫入 `script.js` 的 `defaultOrderApiUrl`，重新部署網站。
+
+完成後，網站會把正式商品訂單與代訂詢問寫入試算表，客人可跨裝置查詢狀態，後台狀態更新也會回寫試算表。
 
 ## 目前資料限制
 
-商品、詢問紀錄、後台設定目前存在瀏覽器 `localStorage`。這代表：
+商品與收費設定仍會在瀏覽器保留一份快取。正式訂單以 Google Sheet 為主，瀏覽器也保留備份：
 
-- 同一台電腦同一個瀏覽器可以查詢與管理
-- 換裝置或換瀏覽器不會同步
-- 正式營運建議改接資料庫，例如 Supabase、Firebase、Airtable 或 Google Sheet API
+- Google API 正常時，新增、查詢與狀態更新均跨裝置同步。
+- API 暫時失敗時，網站會要求客人改用 LINE 送出，避免漏單。
+- 商品後台修改目前只影響操作中的瀏覽器；正式商品清單更新後仍需提交至 GitHub。
 
 ## 通知方式
 
