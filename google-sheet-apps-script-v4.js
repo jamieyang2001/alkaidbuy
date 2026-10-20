@@ -245,7 +245,7 @@ function findOrderRow_(quoteId) {
   const finder = sheet.getRange(2, 2, sheet.getLastRow() - 1, 1)
     .createTextFinder(String(quoteId || "").trim().toUpperCase()).matchEntireCell(true).findNext();
   if (!finder) return null;
-  return { row: finder.getRow(), values: sheet.getRange(finder.getRow(), 1, 1, 19).getValues()[0] };
+  return { row: finder.getRow(), values: sheet.getRange(finder.getRow(), 1, 1, Math.max(24, sheet.getLastColumn())).getValues()[0] };
 }
 
 function rowToOrder_(row) {
@@ -298,7 +298,7 @@ function memberLogout_(token) {
 function memberProfile_(token) {
   const member = memberFromToken_(token, true);
   const orderSheet = sheet_(ORDER_SHEET);
-  const orders = orderSheet.getLastRow() < 2 ? [] : orderSheet.getRange(2, 1, orderSheet.getLastRow() - 1, 19).getValues()
+  const orders = orderSheet.getLastRow() < 2 ? [] : orderSheet.getRange(2, 1, orderSheet.getLastRow() - 1, Math.max(24, orderSheet.getLastColumn())).getValues()
     .filter(function(row) { return String(row[17]) === member.id; })
     .reverse().map(rowToOrder_);
   const orderIds = {};
