@@ -493,7 +493,7 @@ function formatSpreadsheet_() {
   return { ok: true, message: "試算表字體、欄寬、列高與標題已整理完成。" };
 }
 
-function authorizeServices_() {
+function authorizeServices() {
   MailApp.sendEmail(NOTIFY_EMAIL, "瑤光代購寄信權限測試", "寄信權限已完成授權，網站通知可以正常寄送。");
   return "授權完成，測試信已寄出";
 }
