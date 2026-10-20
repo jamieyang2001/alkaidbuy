@@ -526,7 +526,7 @@ const adminAuthKey = "yaoguang-admin-auth";
 const adminPassword = "tophet1003";
 const lineOfficialUrl = "https://lin.ee/NxJLmwO";
 const contactEmail = "alkaidbuy@gmail.com";
-const defaultOrderApiUrl = "";
+const defaultOrderApiUrl = "https://script.google.com/macros/s/AKfycbzpjqqe6NV_xusYI0mkrV3W9HtXsgQg-b-9vwNm4YvJ7tZij-Us80JtAm4MgCalAKFy/exec";
 
 const fixedServiceTiers = [
   { max: 500, fee: 30 },
