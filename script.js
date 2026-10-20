@@ -1035,11 +1035,11 @@ const feeSettingsKey = "yaoguang-fee-settings";
 const couponStorageKey = "yaoguang-coupons";
 const cartStorageKey = "yaoguang-cart-v1";
 const adminAuthKey = "yaoguang-admin-auth";
+const adminTokenKey = "yaoguang-admin-token";
 const memberSessionKey = "yaoguang-member-session";
 const favoriteStorageKey = "yaoguang-favorites";
 const recentStorageKey = "yaoguang-recent";
 const productSnapshotKey = "yaoguang-product-snapshots";
-const adminPassword = "tophet1003";
 const lineOfficialUrl = "https://lin.ee/NxJLmwO";
 const contactEmail = "alkaidbuy@gmail.com";
 const defaultOrderApiUrl = "https://script.google.com/macros/s/AKfycbzpjqqe6NV_xusYI0mkrV3W9HtXsgQg-b-9vwNm4YvJ7tZij-Us80JtAm4MgCalAKFy/exec";
@@ -1065,7 +1065,7 @@ const els = {
   shippingMethod: $("#shippingMethod"), shippingWeight: $("#shippingWeight"), itemYen: $("#itemYen"), yenRate: $("#yenRate"), domesticYen: $("#domesticYen"), servicePercent: $("#servicePercent"), minimumFee: $("#minimumFee"), extraFee: $("#extraFee"),
   shippingYen: $("#shippingYen"), itemTwd: $("#itemTwd"), serviceFeeTwd: $("#serviceFeeTwd"), estimateTotal: $("#estimateTotal"), shippingNote: $("#shippingNote"),
   adminForm: $("#adminForm"), editingProductId: $("#editingProductId"), saveProductButton: $("#saveProductButton"), cancelEditProduct: $("#cancelEditProduct"), resetProducts: $("#resetProducts"),
-  adminName: $("#adminName"), adminCategory: $("#adminCategory"), adminSubcategory: $("#adminSubcategory"), adminPrice: $("#adminPrice"), adminWeight: $("#adminWeight"), adminSpec: $("#adminSpec"), adminVariants: $("#adminVariants"), adminStatus: $("#adminStatus"), adminImage: $("#adminImage"), adminDescription: $("#adminDescription"), adminProductList: $("#adminProductList"),
+  adminName: $("#adminName"), adminCategory: $("#adminCategory"), adminSubcategory: $("#adminSubcategory"), adminPrice: $("#adminPrice"), adminWeight: $("#adminWeight"), adminStock: $("#adminStock"), adminSpec: $("#adminSpec"), adminVariants: $("#adminVariants"), adminStatus: $("#adminStatus"), adminImage: $("#adminImage"), adminDescription: $("#adminDescription"), adminProductList: $("#adminProductList"),
   couponForm: $("#couponForm"), adminCouponCode: $("#adminCouponCode"), adminCouponType: $("#adminCouponType"), adminCouponValue: $("#adminCouponValue"), adminCouponMinimum: $("#adminCouponMinimum"), adminCouponExpiry: $("#adminCouponExpiry"), adminCouponActive: $("#adminCouponActive"), couponAdminList: $("#couponAdminList"),
   settingsForm: $("#settingsForm"), settingShippingMethod: $("#settingShippingMethod"), settingYenRate: $("#settingYenRate"), settingServicePercent: $("#settingServicePercent"), settingMinimumFee: $("#settingMinimumFee"), settingExtraFee: $("#settingExtraFee"), settingNotifyEmail: $("#settingNotifyEmail"), settingSheetUrl: $("#settingSheetUrl"),
   orderList: $("#orderList"), exportOrders: $("#exportOrders"), clearOrders: $("#clearOrders"),
@@ -1384,7 +1384,7 @@ function renderProducts() {
         <span class="status-pill" data-status="${product.status}">${product.status}</span>
         <button class="product-title-button" type="button" data-detail-id="${product.id}"><h3>${product.name}</h3></button>
         <p>${product.description}</p>
-        <div class="product-meta"><span>${productSubcategory(product)}</span><span>${productSpec(product)}</span></div>
+        <div class="product-meta"><span>${productSubcategory(product)}</span><span>${productSpec(product)}</span><span>${product.stock === undefined ? "庫存需確認" : product.stock > 0 ? `庫存 ${product.stock}` : "缺貨"}</span>${product.updatedAt ? `<span>更新 ${new Date(product.updatedAt).toLocaleDateString("zh-TW")}</span>` : ""}</div>
         ${productVariants(product).length > 1 ? `<label class="variant-picker">規格<select data-variant-for="${product.id}">${productVariants(product).map((variant) => `<option>${variant}</option>`).join("")}</select></label>` : ""}
         <div class="product-details"><span>${productOfficialYen(product) ? `官網 ${yen(productOfficialYen(product))} / ${product.weight.toLocaleString("zh-TW")}g / 含代購費` : `${product.weight.toLocaleString("zh-TW")}g`}</span><strong class="price">${productDisplayPrice(product)}</strong></div>
         <div class="product-actions">
@@ -1579,6 +1579,7 @@ function setProductForm(product) {
   els.adminSubcategory.value = product.subcategory || productSubcategory(product);
   els.adminPrice.value = productOfficialYen(product) || product.price;
   els.adminWeight.value = product.weight;
+  els.adminStock.value = product.stock ?? 10;
   els.adminSpec.value = product.spec || productSpec(product);
   els.adminVariants.value = productVariants(product).join("|");
   els.adminStatus.value = product.status;
@@ -1645,7 +1646,7 @@ function exportOrdersCsv() {
 }
 
 function updateAdminAccess() {
-  const isAuthed = localStorage.getItem(adminAuthKey) === "true";
+  const isAuthed = Boolean(localStorage.getItem(adminTokenKey));
   els.adminSection.hidden = !isAuthed;
   if (isAuthed) {
     els.adminLoginMessage.textContent = "已登入後台。";
@@ -1800,10 +1801,14 @@ els.settingsForm.addEventListener("submit", (event) => {
 els.adminForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const id = els.editingProductId.value || `custom-${Date.now()}`;
-  const product = { id, name: els.adminName.value.trim(), category: els.adminCategory.value, subcategory: els.adminSubcategory.value.trim(), yenPrice: Number(els.adminPrice.value), price: Number(els.adminPrice.value), weight: Number(els.adminWeight.value), spec: els.adminSpec.value.trim(), variants: els.adminVariants.value.trim().split("|").filter(Boolean), status: els.adminStatus.value, image: els.adminImage.value.trim() || "https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?auto=format&fit=crop&w=900&q=80", description: els.adminDescription.value.trim() };
+  const previous = products.find((item) => item.id === id) || {};
+  const stock = Number(els.adminStock.value);
+  const product = { id, name: els.adminName.value.trim(), category: els.adminCategory.value, subcategory: els.adminSubcategory.value.trim(), yenPrice: Number(els.adminPrice.value), price: Number(els.adminPrice.value), weight: Number(els.adminWeight.value), stock, updatedAt: new Date().toISOString(), spec: els.adminSpec.value.trim(), variants: els.adminVariants.value.trim().split("|").filter(Boolean), status: stock <= 0 ? "售完" : els.adminStatus.value, image: els.adminImage.value.trim() || "https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?auto=format&fit=crop&w=900&q=80", description: els.adminDescription.value.trim() };
   const index = products.findIndex((item) => item.id === id);
   if (index >= 0) products[index] = product;
   else products.push(product);
+  const adminToken = localStorage.getItem(adminTokenKey);
+  if (adminToken) apiRequest("productNotify", { adminToken, product, previous }).catch(() => {});
   save(productStorageKey, products);
   resetProductForm();
   renderCategories();
@@ -1882,7 +1887,7 @@ els.orderList.addEventListener("change", async (event) => {
   orders[Number(select.dataset.index)].status = select.value;
   save(orderStorageKey, orders);
   try {
-    await apiRequest("updateStatus", { quoteId: orders[Number(select.dataset.index)].quoteId, status: select.value, password: adminPassword });
+    await apiRequest("updateStatus", { quoteId: orders[Number(select.dataset.index)].quoteId, status: select.value, adminToken: localStorage.getItem(adminTokenKey) });
   } catch (error) {
     showSummary(`訂單狀態只更新在這台瀏覽器，尚未同步到試算表：${error.message}`);
   }
@@ -1896,7 +1901,7 @@ els.orderList.addEventListener("click", async (event) => {
   orders[index].adminNote = card.querySelector("[data-note-index]").value.trim();
   save(orderStorageKey, orders);
   try {
-    await apiRequest("updateStatus", { quoteId: orders[index].quoteId, status: orders[index].status, adminNote: orders[index].adminNote, trackingNumber: orders[index].trackingNumber, password: adminPassword });
+    await apiRequest("updateStatus", { quoteId: orders[index].quoteId, status: orders[index].status, adminNote: orders[index].adminNote, trackingNumber: orders[index].trackingNumber, adminToken: localStorage.getItem(adminTokenKey) });
     button.textContent = "已儲存";
   } catch (error) { showSummary(`進度尚未同步：${error.message}`); }
 });
@@ -1952,12 +1957,13 @@ els.memberLogout.addEventListener("click", async () => {
 
 els.adminLoginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (els.adminPassword.value === adminPassword) {
-    localStorage.setItem(adminAuthKey, "true");
+  try {
+    const login = await apiRequest("adminLogin", { password: els.adminPassword.value });
+    localStorage.setItem(adminTokenKey, login.adminToken);
     els.adminPassword.value = "";
     updateAdminAccess();
     try {
-      const result = await apiRequest("orders", { password: adminPassword }, "GET");
+      const result = await apiRequest("orders", { adminToken: login.adminToken }, "GET");
       orders = result.orders;
       save(orderStorageKey, orders);
       renderOrders();
@@ -1966,13 +1972,14 @@ els.adminLoginForm.addEventListener("submit", async (event) => {
       els.adminLoginMessage.textContent = `已登入；雲端訂單尚未連線：${error.message}`;
     }
     els.adminSection.scrollIntoView({ behavior: "smooth", block: "start" });
-  } else {
-    els.adminLoginMessage.textContent = "密碼錯誤，請再試一次。";
-  }
+  } catch (error) { els.adminLoginMessage.textContent = error.message; }
 });
 
 els.adminLogout.addEventListener("click", () => {
+  const token = localStorage.getItem(adminTokenKey);
+  if (token) apiRequest("adminLogout", { adminToken: token }).catch(() => {});
   localStorage.removeItem(adminAuthKey);
+  localStorage.removeItem(adminTokenKey);
   updateAdminAccess();
   document.querySelector("#admin-login").scrollIntoView({ behavior: "smooth", block: "start" });
 });

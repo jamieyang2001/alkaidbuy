@@ -9,6 +9,7 @@ const RECENT_KEY = "yaoguang-recent";
 const SNAPSHOT_KEY = "yaoguang-product-snapshots";
 const ADDRESS_KEY = "yaoguang-addresses";
 const NOTICE_KEY = "yaoguang-product-notices";
+const PRODUCT_KEY = "yaoguang-products-v23";
 const CONTACT_EMAIL = "alkaidbuy@gmail.com";
 const LINE_URL = "https://lin.ee/NxJLmwO";
 const SHIPPING = {
@@ -175,6 +176,15 @@ async function initMemberPage() {
     renderAddresses();
     syncMemberData();
   });
+  $("#supportForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    $("#supportMessage").textContent = "送出中...";
+    try {
+      const result = await apiRequest("supportCreate", { token: currentSession()?.token, quoteId: $("#supportQuoteId").value.trim(), type: $("#supportType").value, details: $("#supportDetails").value.trim(), attachment: $("#supportAttachment").value.trim() });
+      $("#supportMessage").textContent = `已送出，案件編號：${result.supportId}`;
+      event.currentTarget.reset();
+    } catch (error) { $("#supportMessage").textContent = error.message; }
+  });
   $("#memberDashboard").addEventListener("click", (event) => {
     const deleteButton = event.target.closest("[data-delete-address]");
     if (deleteButton) { save(ADDRESS_KEY, load(ADDRESS_KEY, []).filter((item) => item.id !== deleteButton.dataset.deleteAddress)); renderAddresses(); syncMemberData(); return; }
@@ -229,6 +239,20 @@ function renderCart() {
   $("#cartShipping").textContent = estimate.outOfRange ? "需另詢" : money(estimate.shipping);
   $("#cartTotal").textContent = estimate.outOfRange ? "需另詢" : money(estimate.total);
   if (currentSession()?.token) syncMemberData();
+}
+
+function validateCart() {
+  const catalog = load(PRODUCT_KEY, []);
+  const changes = [];
+  cart.forEach((item) => {
+    const current = catalog.find((product) => product.id === item.id);
+    if (!current) return;
+    if (current.status === "售完" || Number(current.stock) === 0) changes.push(`${item.name} 已售完或暫時缺貨`);
+    if (current.updatedAt && item.updatedAt && current.updatedAt !== item.updatedAt) changes.push(`${item.name} 的價格或商品資料曾更新，送單前將由客服再次確認`);
+  });
+  $("#cartValidation").hidden = !changes.length;
+  $("#cartValidation").innerHTML = changes.length ? `<strong>購物車內容有變動</strong>${changes.map((message) => `<p>${escapeHtml(message)}</p>`).join("")}` : "";
+  return !changes.some((message) => message.includes("售完"));
 }
 
 function applyCoupon() {
@@ -309,6 +333,7 @@ async function initCartPage() {
   $("#checkoutShippingMethod").addEventListener("change", renderCart);
   showCheckoutStage(1);
   renderCart();
+  validateCart();
   $("#cartItems").addEventListener("click", (event) => {
     const button = event.target.closest("button[data-action]");
     if (!button) return;
@@ -324,6 +349,7 @@ async function initCartPage() {
   $("#checkoutForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!cart.length) return showSummary("購物車目前是空的，請先加入商品。");
+    if (!validateCart()) return showSummary("購物車內有已售完商品，請先移除後再送出訂單。");
     const button = $("#submitOrder");
     button.disabled = true;
     button.textContent = "訂單送出中...";
