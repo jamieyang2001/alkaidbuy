@@ -3,7 +3,7 @@
   const ERROR_API = "https://script.google.com/macros/s/AKfycbzpjqqe6NV_xusYI0mkrV3W9HtXsgQg-b-9vwNm4YvJ7tZij-Us80JtAm4MgCalAKFy/exec";
   const translations = {
     en: {
-      "商品": "Products", "代訂": "Requests", "運費": "Shipping", "購物車": "Cart", "會員": "Account", "查詢": "Order lookup", "後台": "Admin",
+      "商品": "Products", "代訂": "Requests", "運費": "Shipping", "購物車": "Cart", "會員": "Account", "查詢": "Order lookup", "後台": "Admin", "首頁": "Home", "代訂詢問": "Requests", "運費試算": "Shipping estimate", "訂單查詢": "Order lookup", "會員客服": "Member support", "客服對話": "Support messages", "更新對話": "Refresh messages", "建立新詢問": "New inquiry", "一般詢問": "General inquiry", "詢問內容": "Message", "送出詢問": "Send inquiry", "傳送": "Send",
       "商品分類": "Product categories", "返回分類": "Back to categories", "顯示更多商品": "Show more", "加入購物車": "Add to cart", "查看日本官網": "Official Japan site", "加入收藏": "Favorite", "取消收藏": "Remove favorite",
       "購物車與結帳": "Cart & checkout", "購物明細": "Cart items", "繼續選購": "Continue shopping", "商品重量": "Weight", "商品小計": "Subtotal", "優惠折抵": "Discount", "預估國際運費": "Estimated shipping", "預估合計": "Estimated total", "下一步": "Next", "上一步": "Back", "確認並送出訂單": "Place order",
       "會員中心": "Member center", "申請會員": "Create account", "會員登入": "Sign in", "姓名": "Name", "密碼": "Password", "訂單": "Orders", "收藏": "Favorites", "最近瀏覽": "Recently viewed", "折價券": "Coupons", "地址簿": "Address book", "售後申請": "Support", "登出": "Sign out",
@@ -16,7 +16,7 @@
       "繁體中文": "Traditional Chinese", "簡體中文": "Simplified Chinese", "英文": "English", "日文": "Japanese", "隱私權與服務條款": "Privacy & terms"
     },
     ja: {
-      "商品": "商品", "代訂": "予約代行", "運費": "送料", "購物車": "カート", "會員": "マイページ", "查詢": "注文照会", "後台": "管理",
+      "商品": "商品", "代訂": "予約代行", "運費": "送料", "購物車": "カート", "會員": "マイページ", "查詢": "注文照会", "後台": "管理", "首頁": "ホーム", "代訂詢問": "代行依頼", "運費試算": "送料計算", "訂單查詢": "注文照会", "會員客服": "会員サポート", "客服對話": "サポートメッセージ", "更新對話": "メッセージ更新", "建立新詢問": "新規お問い合わせ", "一般詢問": "一般のお問い合わせ", "詢問內容": "お問い合わせ内容", "送出詢問": "お問い合わせを送信", "傳送": "送信",
       "商品分類": "商品カテゴリー", "返回分類": "カテゴリーに戻る", "顯示更多商品": "さらに表示", "加入購物車": "カートに入れる", "查看日本官網": "日本公式サイト", "加入收藏": "お気に入り", "取消收藏": "お気に入り解除",
       "購物車與結帳": "カート・ご注文", "購物明細": "カート内容", "繼續選購": "買い物を続ける", "商品重量": "商品重量", "商品小計": "小計", "優惠折抵": "割引", "預估國際運費": "国際送料（概算）", "預估合計": "合計（概算）", "下一步": "次へ", "上一步": "戻る", "確認並送出訂單": "注文を送信",
       "會員中心": "マイページ", "申請會員": "会員登録", "會員登入": "ログイン", "姓名": "氏名", "密碼": "パスワード", "訂單": "注文", "收藏": "お気に入り", "最近瀏覽": "閲覧履歴", "折價券": "クーポン", "地址簿": "住所録", "售後申請": "お問い合わせ", "登出": "ログアウト",

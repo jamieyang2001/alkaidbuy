@@ -82,6 +82,17 @@ function savedProductCards(items, favoriteMode) {
   return items.length ? items.map((product) => `<article class="saved-product"><img src="${escapeHtml(product.image || "")}" alt="" /><div><strong>${escapeHtml(product.name)}</strong><span>${money(product.price)}・${escapeHtml(product.spec || "標準款")}</span>${favoriteMode ? `<div class="notice-options"><label><input type="checkbox" data-notice="stock" data-id="${product.id}" ${notices[product.id]?.stock ? "checked" : ""} /> 有貨通知</label><label><input type="checkbox" data-notice="price" data-id="${product.id}" ${notices[product.id]?.price ? "checked" : ""} /> 降價通知</label></div>` : ""}</div><div class="saved-product-actions"><a class="secondary-button" href="index.html?product=${encodeURIComponent(product.id)}#products">查看</a><button class="primary-button" type="button" data-buy-id="${product.id}">加入購物車</button></div></article>`).join("") : '<p class="empty-cart">目前沒有商品紀錄。</p>';
 }
 
+function renderSupportThreads(cases) {
+  const list = $("#memberSupportList");
+  if (!list) return;
+  list.innerHTML = cases.length ? cases.map((item) => `
+    <article class="support-thread" data-support-id="${escapeHtml(item.id)}">
+      <header><div><strong>${escapeHtml(item.id)}・${escapeHtml(item.type)}</strong><span>${escapeHtml(item.quoteId || "未指定訂單")}・更新 ${escapeHtml(item.updatedAt || item.createdAt)}</span></div><span class="lookup-status">${escapeHtml(item.status)}</span></header>
+      <div class="support-messages">${(item.messages || []).map((message) => `<div class="support-message ${message.sender === "會員" ? "customer" : "staff"}"><strong>${escapeHtml(message.sender)}</strong><p>${escapeHtml(message.message)}</p>${message.attachment ? `<a href="${escapeHtml(message.attachment)}" target="_blank" rel="noreferrer">查看附件</a>` : ""}<time>${escapeHtml(message.createdAt)}</time></div>`).join("")}</div>
+      ${item.status === "已完成" || item.status === "已拒絕" ? "" : `<form class="support-reply-form" data-support-reply="${escapeHtml(item.id)}"><input name="message" required placeholder="輸入要回覆客服的內容" /><button class="primary-button" type="submit">傳送</button></form>`}
+    </article>`).join("") : '<p class="empty-cart">目前沒有客服對話，可以在下方建立新詢問。</p>';
+}
+
 function renderMemberProfile(profile) {
   $("#memberAuth").hidden = true;
   $("#memberDashboard").hidden = false;
@@ -108,6 +119,7 @@ function renderMemberProfile(profile) {
     </article>`).join("") : '<p class="empty-cart">目前還沒有會員訂單。</p>';
   $("#memberFavoriteList").innerHTML = savedProductCards(productList(load(FAVORITE_KEY, [])), true);
   $("#memberRecentList").innerHTML = savedProductCards(productList(load(RECENT_KEY, [])), false);
+  renderSupportThreads(profile.support || []);
   renderAddresses();
   window.memberOrders = orders;
   syncMemberData();
@@ -234,7 +246,32 @@ async function initMemberPage() {
       const result = await apiRequest("supportCreate", { token: currentSession()?.token, quoteId: $("#supportQuoteId").value.trim(), type: $("#supportType").value, details: $("#supportDetails").value.trim(), attachment: $("#supportAttachment").value.trim() });
       $("#supportMessage").textContent = `已送出，案件編號：${result.supportId}`;
       form.reset();
+      const profile = await apiRequest("memberProfile", { token: currentSession()?.token });
+      renderSupportThreads(profile.profile.support || []);
     } catch (error) { $("#supportMessage").textContent = error.message; }
+  });
+  $("#refreshSupportThreads").addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      const result = await apiRequest("memberProfile", { token: currentSession()?.token });
+      renderSupportThreads(result.profile.support || []);
+    } catch (error) { $("#supportMessage").textContent = error.message; }
+    finally { button.disabled = false; }
+  });
+  $("#memberSupportList").addEventListener("submit", async (event) => {
+    const form = event.target.closest("[data-support-reply]");
+    if (!form) return;
+    event.preventDefault();
+    const button = form.querySelector("button");
+    button.disabled = true;
+    try {
+      await apiRequest("supportReply", { token: currentSession()?.token, supportId: form.dataset.supportReply, message: new FormData(form).get("message") });
+      const result = await apiRequest("memberProfile", { token: currentSession()?.token });
+      renderSupportThreads(result.profile.support || []);
+      $("#supportMessage").textContent = "訊息已送出，客服也會收到 Email 通知。";
+    } catch (error) { $("#supportMessage").textContent = error.message; }
+    finally { button.disabled = false; }
   });
   $("#memberDashboard").addEventListener("click", (event) => {
     const deleteButton = event.target.closest("[data-delete-address]");
