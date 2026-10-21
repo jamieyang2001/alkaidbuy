@@ -165,6 +165,7 @@ async function initMemberPage() {
 
   $("#memberLoginForm").addEventListener("submit", async (event) => {
     event.preventDefault();
+    const form = event.currentTarget;
     $("#memberMessage").textContent = "登入中...";
     try {
       const result = await apiRequest("memberLogin", { email: $("#memberLoginEmail").value.trim(), password: $("#memberLoginPassword").value });
@@ -174,7 +175,7 @@ async function initMemberPage() {
         return;
       }
       save(SESSION_KEY, { token: result.token });
-      event.currentTarget.reset();
+      form.reset();
       const profile = await apiRequest("memberProfile", { token: result.token });
       renderMemberProfile(profile.profile);
       $("#memberMessage").textContent = "";
@@ -195,10 +196,11 @@ async function initMemberPage() {
 
   $("#passwordResetConfirmForm").addEventListener("submit", async (event) => {
     event.preventDefault();
+    const form = event.currentTarget;
     $("#memberMessage").textContent = "正在更新密碼...";
     try {
       await apiRequest("passwordResetConfirm", { email: $("#resetConfirmEmail").value.trim(), code: $("#resetCode").value.trim(), password: $("#resetNewPassword").value });
-      event.currentTarget.reset();
+      form.reset();
       showAuthPanel("login");
       $("#memberMessage").textContent = "密碼已更新，請使用新密碼登入。";
     } catch (error) { $("#memberMessage").textContent = error.message; }
@@ -226,11 +228,12 @@ async function initMemberPage() {
   });
   $("#supportForm").addEventListener("submit", async (event) => {
     event.preventDefault();
+    const form = event.currentTarget;
     $("#supportMessage").textContent = "送出中...";
     try {
       const result = await apiRequest("supportCreate", { token: currentSession()?.token, quoteId: $("#supportQuoteId").value.trim(), type: $("#supportType").value, details: $("#supportDetails").value.trim(), attachment: $("#supportAttachment").value.trim() });
       $("#supportMessage").textContent = `已送出，案件編號：${result.supportId}`;
-      event.currentTarget.reset();
+      form.reset();
     } catch (error) { $("#supportMessage").textContent = error.message; }
   });
   $("#memberDashboard").addEventListener("click", (event) => {
@@ -406,6 +409,7 @@ async function initCartPage() {
   $("#couponCode").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); applyCoupon(); } });
   $("#checkoutForm").addEventListener("submit", async (event) => {
     event.preventDefault();
+    const formElement = event.currentTarget;
     if (!cart.length) return showSummary("購物車目前是空的，請先加入商品。");
     if (!validateCart()) return showSummary("購物車內有已售完商品，請先移除後再送出訂單。");
     const button = $("#submitOrder");
@@ -437,7 +441,7 @@ async function initCartPage() {
       showCheckoutStage(4);
       document.querySelectorAll("#checkoutSteps li").forEach((item) => item.classList.add("active"));
       showSummary(`${message}\n\n已成功送出訂單。請保存訂單編號，可在網站查詢進度。`);
-      event.currentTarget.reset();
+      formElement.reset();
     } catch (error) { showSummary(`${message}\n\n注意：${error.message}。請點下方 LINE 按鈕把訂單傳給客服。`); }
     button.disabled = false;
     button.textContent = "確認並送出訂單";
