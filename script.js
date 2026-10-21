@@ -1056,6 +1056,8 @@ const defaultProducts = [
   {"id":"seven-live-321506","name":"７Ｐ シュガーバターの木 焼きりんごブリュレ仕立て","category":"seven","subcategory":"日本零食","yenPrice":278,"price":278,"weight":120,"spec":"1袋／1盒","variants":["1件"],"status":"可代購","description":"日本7-Eleven官方販售零食。實際庫存與售價依門市及官方頁面為準。","image":"https://img-afd.7api-01.dp1.sej.co.jp/item-image/321506/CB37CF64F52D9AB0B08E772823B23980.jpg","sourceUrl":"https://www.sej.co.jp/products/a/item/321506/"},
 ];
 
+defaultProducts.push(...(window.LAWSON_OFFICIAL_PRODUCTS || []));
+
 const shippingRates = {
   ems: { label: "EMS 國際快捷", limit: 30000, rows: [[500,1450],[600,1600],[700,1750],[800,1900],[900,2050],[1000,2200],[1250,2500],[1500,2800],[1750,3100],[2000,3400],[2500,3900],[3000,4400],[3500,4900],[4000,5400],[4500,5900],[5000,6400],[5500,6900],[6000,7400],[7000,8200],[8000,9000],[9000,9800],[10000,10600],[11000,11400],[12000,12200],[13000,13000],[14000,13800],[15000,14600],[16000,15400],[17000,16200],[18000,17000],[19000,17800],[20000,18600],[21000,19400],[22000,20200],[23000,21000],[24000,21800],[25000,22600],[26000,23400],[27000,24200],[28000,25000],[29000,25800],[30000,26600]] },
   smallPacketAir: { label: "小形包裝物 航空", limit: 2000, rows: [[100,350],[200,450],[300,550],[400,650],[500,750],[600,850],[700,950],[800,1050],[900,1150],[1000,1250],[1100,1350],[1200,1450],[1300,1550],[1400,1650],[1500,1750],[1600,1850],[1700,1950],[1800,2050],[1900,2150],[2000,2250]] },
@@ -1089,6 +1091,13 @@ const fixedServiceTiers = [
 const fixedProductRate = 0.205;
 
 const $ = (id) => document.querySelector(id);
+document.addEventListener("error", (event) => {
+  const image = event.target;
+  if (!(image instanceof HTMLImageElement) || image.dataset.fallbackApplied) return;
+  image.dataset.fallbackApplied = "true";
+  image.src = "assets/product-image-unavailable.svg";
+  image.classList.add("image-unavailable");
+}, true);
 const els = {
   categoryGrid: $("#categoryGrid"), categoryView: $("#categoryView"), categoryTitle: $("#categoryTitle"), backToCategories: $("#backToCategories"),
   productSearch: $("#productSearch"), productSubcategory: $("#productSubcategory"), productStatus: $("#productStatus"), productSpecFilter: $("#productSpecFilter"), productMinPrice: $("#productMinPrice"), productMaxPrice: $("#productMaxPrice"), productSort: $("#productSort"), productGrid: $("#productGrid"), searchSuggestions: $("#searchSuggestions"),
@@ -1110,11 +1119,16 @@ const els = {
   dashboardStats: $("#dashboardStats"), refreshDashboard: $("#refreshDashboard"), syncCatalog: $("#syncCatalog"), enableBackup: $("#enableBackup"), operationsMessage: $("#operationsMessage"),
 };
 
+const unverifiedProductIds = new Set([
+  "matsukiyo-55","matsukiyo-56","matsukiyo-57","matsukiyo-58","matsukiyo-59","matsukiyo-60","matsukiyo-62","matsukiyo-64","matsukiyo-65","matsukiyo-67","matsukiyo-68","matsukiyo-69","matsukiyo-70","matsukiyo-71","matsukiyo-72","matsukiyo-73","matsukiyo-74","matsukiyo-77","matsukiyo-78",
+  "muji-18","muji-19","muji-20","muji-22","loft-13","loft-14","loft-15","loft-16"
+]);
+
 function mergeCatalog(baseProducts, overrideProducts) {
   const overrides = new Map((overrideProducts || []).map((product) => [product.id, product]));
   const merged = baseProducts.map((product) => ({ ...product, ...(overrides.get(product.id) || {}) }));
   const baseIds = new Set(baseProducts.map((product) => product.id));
-  return merged.concat((overrideProducts || []).filter((product) => !baseIds.has(product.id)));
+  return merged.concat((overrideProducts || []).filter((product) => !baseIds.has(product.id))).filter((product) => !unverifiedProductIds.has(product.id));
 }
 let products = mergeCatalog(defaultProducts, load(productStorageKey, []));
 let orders = load(orderStorageKey, []);
@@ -1880,12 +1894,26 @@ updateSpecialRequirements();
 
 els.specialForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const id = quoteId();
-  const message = ["瑤光代購 代訂詢問", `報價編號：${id}`, `需求類型：${els.specialType.value}`, `姓名：${$("#specialName").value.trim()}`, `聯絡方式：${$("#specialContact").value.trim()}`, `店家或場所：${$("#venueName").value.trim() || "未填"}`, `活動或商品：${$("#requestName").value.trim() || "未填"}`, `網址：${$("#specialLink").value.trim() || "未提供"}`, `日期：${$("#specialDate").value || "未指定"}`, `時間：${$("#specialTime").value || "未指定"}`, `人數：${$("#peopleCount").value || "未指定"}`, `數量：${$("#itemQuantity").value || "未指定"}`, `預算：${$("#specialBudget").value.trim() || "未指定"}`, `需求內容：${$("#specialDetails").value.trim()}`].join("\n");
-  showSummary(message);
-  const result = await saveOrder({ quoteId: id, type: els.specialType.value, customer: $("#specialName").value.trim(), contact: $("#specialContact").value.trim(), memberToken: memberSession?.token || "", message });
-  if (!result.synced) showSummary(`${message}\n\n注意：${result.error}。請點下方 LINE 按鈕把詢問傳給客服。`);
-  else showSummary(`${message}\n\n詢問已成功送出，請保存編號。`);
+  const button = event.submitter;
+  const status = $("#specialSubmitStatus");
+  button.disabled = true;
+  status.textContent = "正在送出詢問...";
+  try {
+    const result = await apiRequest("inquiryCreate", {
+      type: els.specialType.value, name: $("#specialName").value.trim(), contact: $("#specialContact").value.trim(),
+      venue: $("#venueName").value.trim(), requestName: $("#requestName").value.trim(), link: $("#specialLink").value.trim(),
+      date: $("#specialDate").value, time: $("#specialTime").value, people: $("#peopleCount").value,
+      quantity: $("#itemQuantity").value, budget: $("#specialBudget").value, details: $("#specialDetails").value.trim(),
+      memberToken: memberSession?.token || ""
+    });
+    status.textContent = `詢問已直接送到客服後台，詢問編號：${result.inquiryId}`;
+    els.specialForm.reset();
+    els.specialType.value = "代訂位";
+    $("#peopleCount").value = "1";
+    updateSpecialRequirements();
+  } catch (error) {
+    status.textContent = `送出失敗：${error.message}`;
+  } finally { button.disabled = false; }
 });
 
 els.lookupForm.addEventListener("submit", async (event) => {
@@ -1995,7 +2023,7 @@ els.adminProductList.addEventListener("click", (event) => {
 });
 
 els.resetProducts.addEventListener("click", () => {
-  products = [...defaultProducts];
+  products = mergeCatalog(defaultProducts, []);
   save(productStorageKey, products);
   resetProductForm();
   renderCategories();

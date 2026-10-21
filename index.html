@@ -135,7 +135,8 @@
           <label class="ticket-field product-field">數量<input id="itemQuantity" type="number" min="1" step="1" placeholder="1" /></label>
           <label>預算 NT$<input id="specialBudget" type="number" inputmode="numeric" min="1" step="1" placeholder="3000" required /></label>
           <label class="full">需求內容（選填）<textarea id="specialDetails" rows="5" placeholder="可填座位偏好、尺寸、顏色、票種、注意事項或其他需求"></textarea></label>
-          <button class="primary-button form-submit" type="submit">產生詢問內容</button>
+          <button class="primary-button form-submit" type="submit">直接送出詢問</button>
+          <p class="member-message full" id="specialSubmitStatus" role="status" aria-live="polite"></p>
         </form>
       </section>
 
@@ -392,6 +393,7 @@
       <span>IG @alkaidbuy・alkaidbuy@gmail.com</span>
     </footer>
 
+    <script src="lawson-products-generated.js"></script>
     <script src="script.js"></script>
     <script src="site-enhancements.js"></script>
   </body>

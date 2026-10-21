@@ -1,7 +1,7 @@
 import fs from "node:fs";
 
-const source = fs.readFileSync(new URL("../script.js", import.meta.url), "utf8");
-const urls = [...new Set([...source.matchAll(/"image":"(https?:[^"]+)"/g)].map((match) => match[1]))];
+const source = ["../script.js", "../lawson-products-generated.js"].map((file) => fs.readFileSync(new URL(file, import.meta.url), "utf8")).join("\n");
+const urls = [...new Set([...source.matchAll(/"image"\s*:\s*"(https?:[^"]+)"/g)].map((match) => match[1]))];
 const failures = [];
 let cursor = 0;
 let passed = 0;
