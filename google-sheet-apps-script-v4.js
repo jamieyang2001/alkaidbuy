@@ -18,6 +18,8 @@ const PACKAGE_SHEET = "日本包裹";
 const COST_SHEET = "成本紀錄";
 const STOCK_SHEET = "現貨庫存";
 const PUBLIC_SETTINGS_SHEET = "網站設定";
+const REFUND_SHEET = "退款紀錄";
+const QUALITY_SHEET = "商品品質檢查";
 
 function doGet(e) {
   const action = String((e.parameter && e.parameter.action) || "health");
@@ -35,6 +37,9 @@ function doGet(e) {
     if (action === "purchaseSummary") { requireAdminToken_(e.parameter.adminToken); return json_({ ok: true, summary: purchaseSummary_(false) }); }
     if (action === "operationsCenter") { requireAdminToken_(e.parameter.adminToken); return json_({ ok: true, data: operationsCenter_() }); }
     if (action === "backupList") { requireAdminToken_(e.parameter.adminToken); return json_({ ok: true, backups: backupList_() }); }
+    if (action === "notifications") { requireAdminToken_(e.parameter.adminToken); return json_({ ok: true, notifications: notificationLog_(), audit: auditLog_() }); }
+    if (action === "businessReport") { requireAdminToken_(e.parameter.adminToken); return json_({ ok: true, report: businessReport_() }); }
+    if (action === "qualityReport") { requireAdminToken_(e.parameter.adminToken); return json_({ ok: true, report: qualityReport_() }); }
     return json_({ ok: true, service: "瑤光代購訂單 API", time: new Date().toISOString() });
   } catch (error) {
     return json_({ ok: false, error: error.message });
@@ -52,9 +57,23 @@ function doPost(e) {
     if (action === "passwordResetConfirm") return json_(passwordResetConfirm_(data));
     if (action === "memberLogout") return json_(memberLogout_(data.token));
     if (action === "memberDataSave") return json_(memberDataSave_(data));
+    if (action === "memberProfile") return json_({ ok: true, profile: memberProfile_(data.token) });
     if (action === "supportCreate") return json_(supportCreate_(data));
+    if (action === "validateCart") return json_(validateCart_(data.items || []));
     if (action === "adminLogin") return json_(adminLogin_(data.password));
     if (action === "adminLogout") return json_(adminLogout_(data.adminToken));
+    if (["orders", "dashboard", "supportCases", "purchaseSummary", "operationsCenter", "backupList", "notifications", "businessReport", "qualityReport"].indexOf(action) >= 0) {
+      requireAdminToken_(data.adminToken);
+      if (action === "orders") return json_({ ok: true, orders: listOrdersWithItems_() });
+      if (action === "dashboard") return json_({ ok: true, dashboard: dashboard_() });
+      if (action === "supportCases") return json_({ ok: true, cases: listSupportCases_() });
+      if (action === "purchaseSummary") return json_({ ok: true, summary: purchaseSummary_(false) });
+      if (action === "operationsCenter") return json_({ ok: true, data: operationsCenter_() });
+      if (action === "backupList") return json_({ ok: true, backups: backupList_() });
+      if (action === "notifications") return json_({ ok: true, notifications: notificationLog_(), audit: auditLog_() });
+      if (action === "businessReport") return json_({ ok: true, report: businessReport_() });
+      return json_({ ok: true, report: qualityReport_() });
+    }
     if (action === "productNotify") { requireAdminToken_(data.adminToken); return json_(productNotify_(data)); }
     if (action === "catalogUpsert") { requireAdminToken_(data.adminToken); return json_(catalogUpsert_(data.product)); }
     if (action === "catalogDelete") { requireAdminToken_(data.adminToken); return json_(catalogDelete_(data.productId)); }
@@ -74,10 +93,12 @@ function doPost(e) {
     if (action === "logError") return json_(logError_(data));
     if (action === "updateStatus") {
       requireAdminToken_(data.adminToken);
-      return json_(updateStatus_(data.quoteId, data.status, data.adminNote, data.trackingNumber));
+      return json_(updateStatus_(data.quoteId, data.status, data.adminNote, data.trackingNumber, data.notify !== false));
     }
     if (action === "updateFulfillment") { requireAdminToken_(data.adminToken); return json_(updateFulfillment_(data)); }
     if (action === "supportUpdate") { requireAdminToken_(data.adminToken); return json_(supportUpdate_(data)); }
+    if (action === "refundSave") { requireAdminToken_(data.adminToken); return json_(refundSave_(data)); }
+    if (action === "runQualityAudit") { requireAdminToken_(data.adminToken); dailyCatalogAudit_(); return json_({ ok: true, report: qualityReport_(), message: "商品品質檢查已完成" }); }
     throw new Error("不支援的操作");
   } catch (error) {
     return json_({ ok: false, error: error.message });
@@ -87,6 +108,22 @@ function doPost(e) {
 function createOrder_(order) {
   rateLimit_("order:" + String(order.contact || "anonymous"), 5, 3600);
   if (!order.quoteId || !order.customer || !order.contact) throw new Error("訂單資料不完整");
+  const validation = validateCart_(order.items || []);
+  if (!validation.valid) throw new Error(validation.errors.join("；"));
+  const catalog = {}, canonicalItems = [], submittedItems = order.items || [];
+  catalogList_().forEach(function(product) { catalog[String(product.id)] = product; });
+  submittedItems.forEach(function(item) {
+    const product = catalog[String(item.id)];
+    if (!product) return;
+    const quantity = Math.max(1, Math.floor(number_(item.quantity)));
+    canonicalItems.push(Object.assign({}, item, { name: product.name, price: number_(product.price), weight: number_(product.weight), category: product.category, status: product.status, sourceUrl: product.sourceUrl, image: product.image, quantity: quantity }));
+  });
+  const canonicalSubtotal = canonicalItems.reduce(function(sum, item) { return sum + number_(item.price) * number_(item.quantity); }, 0);
+  order.items = canonicalItems;
+  order.subtotal = canonicalSubtotal;
+  order.discount = Math.min(Math.max(0, number_(order.discount)), canonicalSubtotal);
+  order.shipping = Math.max(0, number_(order.shipping));
+  order.total = Math.max(0, order.subtotal - order.discount + order.shipping);
   const sheet = sheet_(ORDER_SHEET);
   if (findOrderRow_(order.quoteId)) return { ok: true, quoteId: order.quoteId, duplicate: true };
   const now = new Date();
@@ -125,7 +162,7 @@ function listOrders_() {
   return sheet.getRange(2, 1, sheet.getLastRow() - 1, Math.max(24, sheet.getLastColumn())).getValues().reverse().map(rowToOrder_);
 }
 
-function updateStatus_(quoteId, status, adminNote, trackingNumber) {
+function updateStatus_(quoteId, status, adminNote, trackingNumber, shouldNotify) {
   const allowed = ["待確認", "已報價", "待付款", "已付款", "採購中", "已到日本倉", "已寄出", "已完成", "已取消"];
   if (allowed.indexOf(status) < 0) throw new Error("訂單狀態不正確");
   const found = findOrderRow_(quoteId);
@@ -136,7 +173,7 @@ function updateStatus_(quoteId, status, adminNote, trackingNumber) {
   if (adminNote !== undefined) sheet.getRange(found.row, 16).setValue(safe_(adminNote));
   if (trackingNumber !== undefined) sheet.getRange(found.row, 19).setValue(safe_(trackingNumber));
   const updated = sheet.getRange(found.row, 1, 1, 19).getValues()[0];
-  notifyOrderStatus_(updated);
+  if (shouldNotify !== false) notifyOrderStatus_(updated);
   audit_("更新訂單狀態", quoteId, status);
   return { ok: true, quoteId: quoteId, status: status };
 }
@@ -245,12 +282,26 @@ function findMemberById_(id) {
 }
 
 function adminLogin_(password) {
-  rateLimit_("admin-login", 30, 900);
-  requireAdmin_(password);
+  const properties = PropertiesService.getScriptProperties(), lock = LockService.getScriptLock();
+  lock.waitLock(5000);
+  try {
+    const lockedUntil = number_(properties.getProperty("ADMIN_LOCKED_UNTIL"));
+    if (lockedUntil > Date.now()) throw new Error("後台暫時鎖定，請30分鐘後再試");
+    try {
+      requireAdmin_(password);
+      properties.deleteProperty("ADMIN_FAILED_LOGINS"); properties.deleteProperty("ADMIN_LOCKED_UNTIL");
+    } catch (error) {
+      const failures = number_(properties.getProperty("ADMIN_FAILED_LOGINS")) + 1;
+      properties.setProperty("ADMIN_FAILED_LOGINS", String(failures));
+      audit_("後台登入失敗", "admin", "連續失敗 " + failures + " 次");
+      if (failures >= 5) { properties.setProperty("ADMIN_LOCKED_UNTIL", String(Date.now() + 30 * 60 * 1000)); properties.setProperty("ADMIN_FAILED_LOGINS", "0"); throw new Error("登入失敗次數過多，後台已鎖定30分鐘"); }
+      throw error;
+    }
+  } finally { lock.releaseLock(); }
   const token = Utilities.getUuid().replace(/-/g, "") + Utilities.getUuid().replace(/-/g, "");
-  const expires = new Date(Date.now() + 6 * 60 * 60 * 1000);
+  const expires = new Date(Date.now() + 4 * 60 * 60 * 1000);
   ensureSheet_(ADMIN_SESSION_SHEET, ["憑證", "建立時間", "到期時間", "狀態"]).appendRow([token, new Date(), expires, "啟用"]);
-  audit_("後台登入", "admin", "登入成功，憑證有效 6 小時");
+  audit_("後台登入", "admin", "登入成功，憑證有效 4 小時");
   return { ok: true, adminToken: token, expires: expires.toISOString() };
 }
 
@@ -317,6 +368,7 @@ function memberRegister_(data) {
 function memberLogin_(data) {
   const email = normalizeEmail_(data.email);
   const password = String(data.password || "");
+  rateLimit_("member-login:" + email, 8, 900);
   if (email === normalizeEmail_(NOTIFY_EMAIL)) {
     const admin = adminLogin_(password);
     return { ok: true, admin: true, adminToken: admin.adminToken, expires: admin.expires };
@@ -350,7 +402,8 @@ function memberProfile_(token) {
       orderIds[row[0]].items.push({ id: row[1], name: row[2], variant: row[3], quantity: number_(row[4]), price: number_(row[5]), subtotal: number_(row[6]), weight: number_(row[7]), category: row[8], status: row[9] });
     });
   }
-  return { member: { id: member.id, name: member.name, email: member.email }, orders: orders, coupons: memberCoupons_(member), data: memberData_(member.id) };
+  const refunds = refundList_().filter(function(refund) { return !!orderIds[refund.quoteId]; });
+  return { member: { id: member.id, name: member.name, email: member.email }, orders: orders, refunds: refunds, coupons: memberCoupons_(member), data: memberData_(member.id) };
 }
 
 function memberDataSave_(data) {
@@ -443,7 +496,30 @@ function memberFromToken_(token, required) {
 function catalogList_() {
   const sheet = ensureSheet_(CATALOG_SHEET, ["商品ID", "商品JSON", "更新時間", "啟用"]);
   if (sheet.getLastRow() < 2) return [];
-  return sheet.getRange(2, 1, sheet.getLastRow() - 1, 4).getValues().filter(function(row) { return String(row[3] || "啟用") === "啟用"; }).map(function(row) { return parseJson_(row[1], null); }).filter(Boolean);
+  const staleBefore = Date.now() - 45 * 24 * 60 * 60 * 1000;
+  return sheet.getRange(2, 1, sheet.getLastRow() - 1, 4).getValues().filter(function(row) { return String(row[3] || "啟用") === "啟用"; }).map(function(row) {
+    const product = parseJson_(row[1], null); if (!product) return null;
+    const updated = row[2] ? new Date(row[2]) : null;
+    product.catalogUpdatedAt = updated ? updated.toISOString() : "";
+    product.priceFreshness = !updated || updated.getTime() < staleBefore ? "需重新確認" : "有效";
+    if (product.priceFreshness === "需重新確認" && product.status === "可代購") product.status = "需查庫存";
+    return product;
+  }).filter(Boolean);
+}
+
+function validateCart_(items) {
+  if (!Array.isArray(items) || !items.length) return { ok: true, valid: true, errors: [], warnings: [], products: [] };
+  const catalog = {}, errors = [], warnings = [], products = [];
+  catalogList_().forEach(function(product) { catalog[String(product.id)] = product; });
+  items.forEach(function(item) {
+    const current = catalog[String(item.id)];
+    if (!current) { errors.push(String(item.name || item.id) + " 已下架或不存在"); return; }
+    if (current.status === "售完" || Number(current.stock) === 0) errors.push(current.name + " 已售完或缺貨");
+    if (Number(item.quantity || 0) > Number(current.stock == null ? 999999 : current.stock)) errors.push(current.name + " 庫存僅剩 " + current.stock + " 件");
+    if (current.priceFreshness === "需重新確認") warnings.push(current.name + " 的價格超過 45 天未確認，將由客服重新報價");
+    products.push({ id: current.id, name: current.name, status: current.status, stock: current.stock, yenPrice: current.yenPrice || current.price, updatedAt: current.catalogUpdatedAt, priceFreshness: current.priceFreshness });
+  });
+  return { ok: true, valid: errors.length === 0, errors: errors, warnings: warnings, products: products };
 }
 
 function passwordResetRequest_(data) {
@@ -478,6 +554,8 @@ function passwordResetConfirm_(data) {
   const salt = Utilities.getUuid();
   sheet_(MEMBER_SHEET).getRange(member.row, 4, 1, 2).setValues([[passwordHash_(password, salt), salt]]);
   sheet.getRange(found.row, 6).setValue("已使用");
+  const sessions = sheet_(MEMBER_SESSION_SHEET);
+  if (sessions.getLastRow() >= 2) sessions.getRange(2, 1, sessions.getLastRow() - 1, 5).getValues().forEach(function(row, index) { if (String(row[1]) === member.id) sessions.getRange(index + 2, 5).setValue("密碼重設後撤銷"); });
   return { ok: true };
 }
 
@@ -594,21 +672,22 @@ function updatePurchaseAllocation_(data) {
 }
 
 function operationsCenter_() {
-  const orders = listOrdersWithItems_(), costs = costMap_(), alerts = [], settlements = [], packing = [];
+  const orders = listOrdersWithItems_(), costs = costMap_(), refunds = refundList_(), refundsByOrder = {}, alerts = [], settlements = [], packing = [];
+  refunds.forEach(function(refund){ if (!refundsByOrder[refund.quoteId]) refundsByOrder[refund.quoteId] = []; refundsByOrder[refund.quoteId].push(refund); });
   orders.filter(function(order) { return order.status !== "已取消"; }).forEach(function(order) {
     const shortages = (order.items || []).reduce(function(sum, item) { return ["缺貨", "取消", "停售"].indexOf(String(item.purchaseStatus)) >= 0 ? sum + Math.max(0, number_(item.quantity) - number_(item.allocated)) * number_(item.price) : sum; }, 0);
     const allocatedItems = (order.items || []).filter(function(item) { return number_(item.allocated) > 0; });
     const cost = costs[order.quoteId] || {};
     const revenue = number_(order.total) + number_(order.balanceDue) - shortages;
     const totalCost = number_(cost.productCostTwd) + number_(cost.domesticShipping) + number_(cost.internationalShipping) + number_(cost.otherCost);
-    settlements.push({ quoteId: order.quoteId, customer: order.customer, contact: order.contact, shortageRefund: shortages, balanceDue: number_(order.balanceDue), paymentStatus: order.paymentStatus, revenue: revenue, cost: totalCost, profit: revenue - totalCost });
+    settlements.push({ quoteId: order.quoteId, customer: order.customer, contact: order.contact, shortageRefund: shortages, balanceDue: number_(order.balanceDue), paymentStatus: order.paymentStatus, revenue: revenue, cost: totalCost, profit: revenue - totalCost, refunds: refundsByOrder[order.quoteId] || [] });
     packing.push({ quoteId: order.quoteId, customer: order.customer, contact: order.contact, delivery: order.delivery, trackingNumber: order.trackingNumber, items: allocatedItems });
     if (shortages > 0) alerts.push({ level: "warning", quoteId: order.quoteId, message: "有缺貨商品，預估應退款 " + shortages + " 元" });
     if (number_(order.balanceDue) > 0 && order.paymentStatus !== "已付款") alerts.push({ level: "warning", quoteId: order.quoteId, message: "待補款 " + order.balanceDue + " 元" });
     if (!order.delivery || String(order.delivery).indexOf("未填") >= 0) alerts.push({ level: "danger", quoteId: order.quoteId, message: "尚未填寫完整收件資料" });
     (order.items || []).forEach(function(item) { if (!item.allocated && item.purchaseStatus === "待採購") alerts.push({ level: "info", quoteId: order.quoteId, message: item.name + " 尚未採購分配" }); });
   });
-  return { settlements: settlements, packing: packing, alerts: alerts, packages: packageList_(), stock: stockList_(), costs: costs };
+  return { settlements: settlements, packing: packing, alerts: alerts, packages: packageList_(), stock: stockList_(), costs: costs, refunds: refunds };
 }
 
 function batchPurchaseStatus_(data) {
@@ -662,6 +741,63 @@ function settingsSave_(data) {
 }
 function sendPurchaseNotice_(quoteId){const order=listOrdersWithItems_().filter(function(item){return item.quoteId===quoteId;})[0];if(!order)throw new Error("找不到訂單");const email=String(order.contact||"");if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))throw new Error("客人聯絡方式不是Email");const lines=(order.items||[]).map(function(item){return item.name+"：分配 "+item.allocated+"/"+item.quantity+"（"+item.purchaseStatus+"）";}).join("\n");sendEmail_(email,"瑤光代購採購進度："+quoteId,"訂單編號："+quoteId+"\n\n"+lines+"\n\n會員中心：https://alkaidbuy.vercel.app/member.html","採購進度",quoteId);return{ok:true};}
 
+function refundSave_(data) {
+  const quoteId = String(data.quoteId || "").trim(), amount = Math.max(0, number_(data.amount)), status = String(data.status || "待退款"), reason = String(data.reason || "").trim();
+  if (!findOrderRow_(quoteId)) throw new Error("找不到訂單");
+  if (!amount || !reason) throw new Error("請填寫退款金額與原因");
+  if (["待退款", "處理中", "已退款", "退款失敗"].indexOf(status) < 0) throw new Error("退款狀態不正確");
+  const sheet = ensureSheet_(REFUND_SHEET, ["退款編號", "訂單編號", "退款金額", "原因", "狀態", "退款日期", "更新時間"]), id = String(data.refundId || "R-" + Utilities.getUuid().replace(/-/g, "").slice(0, 10).toUpperCase());
+  const values = [id, quoteId, amount, safe_(reason), status, status === "已退款" ? new Date() : "", new Date()];
+  const cell = sheet.getLastRow() < 2 ? null : sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).createTextFinder(id).matchEntireCell(true).findNext();
+  if (cell) sheet.getRange(cell.getRow(), 1, 1, 7).setValues([values]); else sheet.appendRow(values);
+  const order = findOrderRow_(quoteId), email = order ? String(order.values[4] || "") : "";
+  if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) sendEmail_(email, "瑤光代購退款進度：" + quoteId, "訂單編號：" + quoteId + "\n退款金額：NT$" + amount + "\n原因：" + reason + "\n狀態：" + status + "\n\n會員中心：https://alkaidbuy.vercel.app/member.html", "退款進度", quoteId);
+  audit_("更新退款紀錄", quoteId, status + " / NT$" + amount + " / " + reason);
+  return { ok: true, refund: refundList_().filter(function(item) { return item.id === id; })[0] };
+}
+
+function refundList_() {
+  const sheet = ensureSheet_(REFUND_SHEET, ["退款編號", "訂單編號", "退款金額", "原因", "狀態", "退款日期", "更新時間"]);
+  if (sheet.getLastRow() < 2) return [];
+  return sheet.getRange(2, 1, sheet.getLastRow() - 1, 7).getValues().reverse().map(function(row) { return { id: row[0], quoteId: row[1], amount: number_(row[2]), reason: row[3], status: row[4], refundedAt: dateText_(row[5]), updatedAt: dateText_(row[6]) }; });
+}
+
+function notificationLog_() {
+  const sheet = ensureSheet_(EMAIL_LOG_SHEET, ["時間", "類型", "關聯編號", "收件者", "主旨", "狀態", "錯誤"]);
+  if (sheet.getLastRow() < 2) return [];
+  const start = Math.max(2, sheet.getLastRow() - 99), count = sheet.getLastRow() - start + 1;
+  return sheet.getRange(start, 1, count, 7).getValues().reverse().map(function(row) { return { createdAt: dateText_(row[0]), type: row[1], reference: row[2], recipient: row[3], subject: row[4], status: row[5], error: row[6] }; });
+}
+
+function auditLog_() {
+  const sheet = ensureSheet_(AUDIT_LOG_SHEET, ["時間", "操作", "關聯編號", "內容"]);
+  if (sheet.getLastRow() < 2) return [];
+  const start = Math.max(2, sheet.getLastRow() - 99), count = sheet.getLastRow() - start + 1;
+  return sheet.getRange(start, 1, count, 4).getValues().reverse().map(function(row) { return { createdAt: dateText_(row[0]), action: row[1], reference: row[2], details: row[3] }; });
+}
+
+function businessReport_() {
+  const orderSheet = sheet_(ORDER_SHEET), orders = orderSheet.getLastRow() < 2 ? [] : orderSheet.getRange(2, 1, orderSheet.getLastRow() - 1, Math.max(24, orderSheet.getLastColumn())).getValues();
+  const costs = costMap_(), daily = {}, monthly = {}, popular = {}, customers = {}, now = new Date();
+  let revenue = 0, cost = 0, unpaid = 0, activeOrders = 0;
+  orders.forEach(function(row) {
+    const status = String(row[11] || ""), date = row[0] ? new Date(row[0]) : now, day = Utilities.formatDate(date, "Asia/Tokyo", "yyyy-MM-dd"), month = day.slice(0, 7), total = number_(row[10]), id = String(row[1]);
+    if (status !== "已取消") { revenue += total; activeOrders++; daily[day] = (daily[day] || 0) + total; monthly[month] = (monthly[month] || 0) + total; customers[String(row[17] || row[4] || row[3])] = true; }
+    if (["待付款", "已報價"].indexOf(status) >= 0 || String(row[23]) === "未付款") unpaid++;
+    const record = costs[id] || {}; cost += number_(record.productCostTwd) + number_(record.domesticShipping) + number_(record.internationalShipping) + number_(record.otherCost);
+  });
+  const itemSheet = sheet_(ITEM_SHEET);
+  if (itemSheet.getLastRow() >= 2) itemSheet.getRange(2, 1, itemSheet.getLastRow() - 1, 7).getValues().forEach(function(row) { const key = String(row[2] || row[1]); popular[key] = (popular[key] || 0) + number_(row[4]); });
+  return { revenue: revenue, cost: cost, profit: revenue - cost, activeOrders: activeOrders, unpaidOrders: unpaid, customerCount: Object.keys(customers).length, daily: Object.keys(daily).sort().slice(-14).map(function(key) { return { period: key, revenue: daily[key] }; }), monthly: Object.keys(monthly).sort().slice(-12).map(function(key) { return { period: key, revenue: monthly[key] }; }), popular: Object.keys(popular).map(function(name) { return { name: name, quantity: popular[name] }; }).sort(function(a,b){return b.quantity-a.quantity;}).slice(0,10) };
+}
+
+function qualityReport_() {
+  const products = catalogList_(), stale = products.filter(function(p){return p.priceFreshness === "需重新確認";}), missingImages = products.filter(function(p){return !String(p.image || "").trim();}), missingSources = products.filter(function(p){return !String(p.sourceUrl || "").trim();});
+  const sheet = ensureSheet_(QUALITY_SHEET, ["檢查時間", "商品ID", "商品名稱", "項目", "結果", "說明"]), failures = [];
+  if (sheet.getLastRow() >= 2) sheet.getRange(Math.max(2, sheet.getLastRow() - 199), 1, Math.min(200, sheet.getLastRow() - 1), 6).getValues().forEach(function(row){if(String(row[4]) !== "正常")failures.push({checkedAt:dateText_(row[0]),id:row[1],name:row[2],type:row[3],result:row[4],details:row[5]});});
+  return { total: products.length, staleCount: stale.length, missingImageCount: missingImages.length, missingSourceCount: missingSources.length, stale: stale.slice(0,100).map(function(p){return{id:p.id,name:p.name,updatedAt:p.catalogUpdatedAt};}), failures: failures.reverse().slice(0,100) };
+}
+
 function sendEmail_(to, subject, body, type, reference) {
   const sheet = ensureSheet_(EMAIL_LOG_SHEET, ["時間", "類型", "關聯編號", "收件者", "主旨", "狀態", "錯誤"]);
   try { MailApp.sendEmail(to, subject, body); sheet.appendRow([new Date(), type, reference, to, subject, "成功", ""]); }
@@ -684,10 +820,33 @@ function rateLimit_(key, limit, seconds) {
 }
 
 function installMaintenance_() {
-  ScriptApp.getProjectTriggers().filter(function(trigger) { return trigger.getHandlerFunction() === "dailyBackup_"; }).forEach(function(trigger) { ScriptApp.deleteTrigger(trigger); });
+  ScriptApp.getProjectTriggers().filter(function(trigger) { return ["dailyBackup_", "dailyCatalogAudit_"].indexOf(trigger.getHandlerFunction()) >= 0; }).forEach(function(trigger) { ScriptApp.deleteTrigger(trigger); });
   ScriptApp.newTrigger("dailyBackup_").timeBased().everyDays(1).atHour(3).create();
+  ScriptApp.newTrigger("dailyCatalogAudit_").timeBased().everyDays(1).atHour(4).create();
   formatSpreadsheet_();
-  return { ok: true, message: "每日備份已啟用，試算表格式已整理" };
+  return { ok: true, message: "每日備份與商品品質檢查已啟用，試算表格式已整理" };
+}
+
+function dailyCatalogAudit_() {
+  const products = catalogList_(), sheet = ensureSheet_(QUALITY_SHEET, ["檢查時間", "商品ID", "商品名稱", "項目", "結果", "說明"]), rows = [], candidates = [];
+  products.forEach(function(product) {
+    if (!product.image) rows.push([new Date(), product.id, product.name, "圖片", "缺少", "未設定圖片網址"]); else candidates.push({ product: product, type: "圖片", url: product.image });
+    if (!product.sourceUrl) rows.push([new Date(), product.id, product.name, "官方連結", "缺少", "未設定官方網址"]); else candidates.push({ product: product, type: "官方連結", url: product.sourceUrl });
+    if (product.priceFreshness === "需重新確認") rows.push([new Date(), product.id, product.name, "價格效期", "逾期", "超過45天未確認"]);
+  });
+  candidates.sort(function(a,b){return String(a.product.catalogUpdatedAt).localeCompare(String(b.product.catalogUpdatedAt));});
+  const batch = candidates.slice(0, 80), requests = batch.map(function(item){return {url:item.url,method:"get",followRedirects:true,muteHttpExceptions:true,headers:{"User-Agent":"Mozilla/5.0 AlkaidBuyCatalogAudit/1.0"}};});
+  if (requests.length) {
+    try {
+      const responses = UrlFetchApp.fetchAll(requests);
+      responses.forEach(function(response,index){const code=response.getResponseCode(),item=batch[index],ok=code>=200&&code<400;rows.push([new Date(),item.product.id,item.product.name,item.type,ok?"正常":"失敗","HTTP "+code+" / "+item.url]);});
+    } catch (error) {
+      rows.push([new Date(), "system", "批次連結檢查", "系統", "失敗", safe_(error.message)]);
+    }
+  }
+  if (rows.length) sheet.getRange(sheet.getLastRow()+1,1,rows.length,6).setValues(rows);
+  if (sheet.getLastRow() > 2001) sheet.deleteRows(2, sheet.getLastRow() - 2001);
+  audit_("商品品質檢查", "catalog", "檢查 " + products.length + " 件商品，連結抽查 " + batch.length + " 筆");
 }
 
 function formatSpreadsheet_() {
@@ -735,7 +894,11 @@ function backupList_() {
 }
 function restoreBackup_(data) {
   if (String(data.confirmation) !== "RESTORE") throw new Error("還原確認文字不正確");
-  const source = SpreadsheetApp.openById(String(data.fileId)), target = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const folders = DriveApp.getFoldersByName("瑤光代購每日備份"); if (!folders.hasNext()) throw new Error("找不到備份資料夾");
+  const files = folders.next().getFiles(), requested = String(data.fileId), allowed = {};
+  while (files.hasNext()) { const file = files.next(); allowed[file.getId()] = true; }
+  if (!allowed[requested]) throw new Error("只能還原系統建立的備份");
+  const source = SpreadsheetApp.openById(requested), target = SpreadsheetApp.openById(SPREADSHEET_ID);
   dailyBackup_();
   source.getSheets().forEach(function(sourceSheet){ let targetSheet=target.getSheetByName(sourceSheet.getName()); if(!targetSheet)targetSheet=target.insertSheet(sourceSheet.getName()); targetSheet.clear(); const range=sourceSheet.getDataRange(); if(range.getNumRows()&&range.getNumColumns())targetSheet.getRange(1,1,range.getNumRows(),range.getNumColumns()).setValues(range.getValues()); });
   audit_("還原備份", data.fileId, source.getName()); return {ok:true,message:"已還原「"+source.getName()+"」，還原前資料也已自動備份"};
@@ -757,9 +920,13 @@ function sheet_(name) {
 }
 
 function requireAdmin_(password) {
-  const configured = PropertiesService.getScriptProperties().getProperty("ADMIN_PASSWORD");
-  if (!configured) throw new Error("尚未設定後台密碼，請在指令碼屬性加入 ADMIN_PASSWORD");
-  if (String(password || "") !== configured) throw new Error("管理密碼錯誤");
+  const properties = PropertiesService.getScriptProperties(), configured = properties.getProperty("ADMIN_PASSWORD"), hash = properties.getProperty("ADMIN_PASSWORD_HASH"), salt = properties.getProperty("ADMIN_PASSWORD_SALT"), candidate = String(password || "");
+  if (!configured && !(hash && salt)) throw new Error("尚未設定後台密碼，請在指令碼屬性加入 ADMIN_PASSWORD");
+  if (hash && salt) { if (passwordHash_(candidate, salt) !== hash) throw new Error("管理密碼錯誤"); return; }
+  if (candidate !== configured) throw new Error("管理密碼錯誤");
+  const newSalt = Utilities.getUuid();
+  properties.setProperties({ ADMIN_PASSWORD_HASH: passwordHash_(candidate, newSalt), ADMIN_PASSWORD_SALT: newSalt });
+  properties.deleteProperty("ADMIN_PASSWORD");
 }
 
 function safe_(value) {

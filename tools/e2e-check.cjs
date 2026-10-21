@@ -52,6 +52,9 @@ const assert = require("node:assert/strict");
   await page.locator('[data-tab="tools"]').click();
   assert.equal(await page.locator('[data-panel="tools"]').first().isVisible(), true, "pricing tools panel should be visible");
   assert.equal(await page.locator('[data-panel="tools"]').last().isVisible(), true, "backup tools panel should be visible");
+  await page.locator('[data-tab="reports"]').click();
+  assert.equal(await page.locator('[data-panel="reports"]').isVisible(), true, "reports and audit panel should be visible");
+  assert.ok(await page.locator("#runQualityAudit").isVisible(), "catalog audit action should be available");
   await page.selectOption("#siteLanguage", "en");
   assert.match(await page.locator('[data-tab="support"]').textContent(), /Support cases/, "admin tabs should translate");
 

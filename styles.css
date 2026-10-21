@@ -573,10 +573,20 @@ input:focus, select:focus, textarea:focus { border-color: var(--green); box-shad
 .operations-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 18px; }.operations-grid .orders-panel { margin-top: 0; }
 .alert-list { display: grid; gap: 8px; }.operation-alert { display: grid; gap: 3px; padding: 10px; border-left: 4px solid #4d8b7d; background: #f5f8f6; }.operation-alert.warning { border-color: #d49b26; }.operation-alert.danger { border-color: #c94f48; }
 .cost-inline { display: grid; grid-template-columns: repeat(4,minmax(100px,1fr)) auto; gap: 8px; }
+.refund-inline { display: grid; grid-template-columns: 140px minmax(180px,1fr) 140px auto; gap: 8px; margin-top: 10px; }
+.refund-history { display: grid; gap: 6px; margin-top: 10px; }
+.refund-history p { display: flex; justify-content: space-between; gap: 12px; margin: 0; padding: 8px 10px; background: #f7faf8; border: 1px solid var(--line); border-radius: 6px; }
+.refund-history span { color: var(--muted); }
+.report-list { display: grid; gap: 7px; }
+.report-list > p { display: flex; justify-content: space-between; gap: 14px; margin: 0; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.report-list .quality-failure { color: #9a352f; }
+.audit-list { display: grid; gap: 8px; max-height: 480px; overflow: auto; }
+.audit-list article { display: grid; gap: 3px; padding: 10px; background: #f7faf8; border-left: 3px solid #1f6f68; }
+.audit-list span,.audit-list p { margin: 0; color: var(--muted); font-size: .86rem; }
 .packing-list { display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); gap: 12px; }.packing-card { border: 1px solid var(--line); padding: 14px; }.packing-card header { display: grid; gap: 3px; margin-bottom: 10px; }.packing-card>div { display: grid; grid-template-columns: 44px 1fr; gap: 8px; align-items: center; padding: 5px 0; }.packing-card img { width: 44px; height: 44px; object-fit: contain; }
 @media (max-width:700px){.admin-product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-product-grid .product-card{grid-template-rows:140px 1fr}.admin-product-grid .product-image{height:140px}.admin-page .orders-heading{align-items:flex-start}.admin-page .panel-actions{width:100%}.admin-page .panel-actions input,.admin-page .panel-actions select{min-width:0;width:100%}}
 @media (max-width:700px){.purchase-allocation-card>header,.allocation-line,.purchase-card-footer{grid-template-columns:1fr;display:grid}.purchase-state{grid-template-columns:1fr 1fr}.admin-order-item{grid-template-columns:56px minmax(0,1fr)}.allocation-badge{grid-column:1/-1}.purchase-product{grid-template-columns:64px minmax(0,1fr)}.purchase-product img{width:64px;height:64px}}
-@media (max-width:900px){.operations-grid{grid-template-columns:1fr}.cost-inline{grid-template-columns:1fr 1fr}}
+@media (max-width:900px){.operations-grid{grid-template-columns:1fr}.cost-inline,.refund-inline{grid-template-columns:1fr 1fr}}
 @media print{body[data-page="admin"] .site-header,body[data-page="admin"] .subpage-heading,body[data-page="admin"] .admin-operations,body[data-page="admin"] .admin-tabs,body[data-page="admin"] [data-panel]:not([data-panel="operations"]),body[data-page="admin"] [data-panel="operations"]:not(:has(#packingList)),body[data-page="admin"] #printPacking{display:none!important}body[data-page="admin"] .orders-panel{box-shadow:none;border:0}.packing-card{break-inside:avoid}}
 .dashboard-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
 .dashboard-stats div { padding: 14px; background: #f7f9f7; border: 1px solid var(--line); border-radius: 6px; }

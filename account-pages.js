@@ -97,13 +97,14 @@ function renderMemberProfile(profile) {
   $("#memberCouponList").innerHTML = coupons.length ? coupons.map((coupon) => `
     <article class="member-coupon"><strong>${escapeHtml(coupon.code)}</strong><span>${coupon.type === "percent" ? `${coupon.value}%` : money(coupon.value)}・滿 ${money(coupon.minimum)}・${escapeHtml(coupon.expiry || "無期限")}</span></article>`).join("") : '<p class="empty-cart">目前沒有可使用的會員折價券。</p>';
   const orders = profile.orders || [];
+  const refundsByOrder = (profile.refunds || []).reduce((result, refund) => { (result[refund.quoteId] ||= []).push(refund); return result; }, {});
   const spent = orders.filter((order) => order.status !== "已取消").reduce((sum, order) => sum + Number(order.total || 0), 0);
   const tier = spent >= 20000 ? "VIP" : spent >= 5000 ? "常客" : "一般會員";
   const points = Math.floor(spent / 100);
   $("#memberStats").innerHTML = `<div><span>會員等級</span><strong>${tier}</strong></div><div><span>累積消費</span><strong>${money(spent)}</strong></div><div><span>瑤光點數</span><strong>${points.toLocaleString("zh-TW")} 點</strong></div>`;
   $("#memberOrderList").innerHTML = orders.length ? orders.map((order, orderIndex) => `
     <article class="member-order"><header><div><strong>${escapeHtml(order.quoteId)}</strong><span>${escapeHtml(order.createdAt)}・${money(order.total || 0)}</span></div><span class="lookup-status">${escapeHtml(order.status)}</span></header>${statusTimeline(order.status)}<p class="order-updated">最後更新：${escapeHtml(order.updatedAt || order.createdAt)}${order.trackingNumber ? `・物流單號：${escapeHtml(order.trackingNumber)}` : ""}</p>${order.actualWeight ? `<p>包裝後實重：${Number(order.actualWeight).toLocaleString("zh-TW")}g・實際國際運費：${money(order.actualShipping || 0)}・付款狀態：${escapeHtml(order.paymentStatus || "未付款")}${order.balanceDue ? `・待補款：${money(order.balanceDue)}` : ""}</p>` : ""}
-      <details><summary>查看購物明細</summary>${(order.items || []).map((item) => `<div class="member-order-item"><span>${escapeHtml(item.name)}・${escapeHtml(item.variant)} × ${item.quantity}</span><strong>${money(item.subtotal)}</strong></div>`).join("") || "<p>這筆詢問沒有固定商品明細。</p>"}${order.adminNote ? `<p>店家備註：${escapeHtml(order.adminNote)}</p>` : ""}</details>${order.items?.length ? `<button class="secondary-button reorder-button" type="button" data-order-index="${orderIndex}">再次購買</button>` : ""}
+      <details><summary>查看購物明細</summary>${(order.items || []).map((item) => `<div class="member-order-item"><span>${escapeHtml(item.name)}・${escapeHtml(item.variant)} × ${item.quantity}</span><strong>${money(item.subtotal)}</strong></div>`).join("") || "<p>這筆詢問沒有固定商品明細。</p>"}${order.adminNote ? `<p>店家備註：${escapeHtml(order.adminNote)}</p>` : ""}</details>${(refundsByOrder[order.quoteId] || []).map((refund) => `<p class="refund-status"><strong>退款 ${money(refund.amount)}</strong>・${escapeHtml(refund.status)}・${escapeHtml(refund.reason)}${refund.refundedAt ? `・${escapeHtml(refund.refundedAt)}` : ""}</p>`).join("")}${order.items?.length ? `<button class="secondary-button reorder-button" type="button" data-order-index="${orderIndex}">再次購買</button>` : ""}
     </article>`).join("") : '<p class="empty-cart">目前還沒有會員訂單。</p>';
   $("#memberFavoriteList").innerHTML = savedProductCards(productList(load(FAVORITE_KEY, [])), true);
   $("#memberRecentList").innerHTML = savedProductCards(productList(load(RECENT_KEY, [])), false);
@@ -146,7 +147,7 @@ async function initMemberPage() {
   if (session?.token) {
     $("#memberMessage").textContent = "正在載入會員資料...";
     try {
-      const result = await apiRequest("memberProfile", { token: session.token }, "GET");
+      const result = await apiRequest("memberProfile", { token: session.token });
       renderMemberProfile(result.profile);
       $("#memberMessage").textContent = "";
     } catch (error) { showLoggedOut(`登入已失效：${error.message}`); }
@@ -174,7 +175,7 @@ async function initMemberPage() {
       }
       save(SESSION_KEY, { token: result.token });
       event.currentTarget.reset();
-      const profile = await apiRequest("memberProfile", { token: result.token }, "GET");
+      const profile = await apiRequest("memberProfile", { token: result.token });
       renderMemberProfile(profile.profile);
       $("#memberMessage").textContent = "";
     } catch (error) { $("#memberMessage").textContent = error.message; }
@@ -339,7 +340,7 @@ async function initCartPage() {
   const session = currentSession();
   if (session?.token) {
     try {
-      const result = await apiRequest("memberProfile", { token: session.token }, "GET");
+      const result = await apiRequest("memberProfile", { token: session.token });
       memberCoupons = result.profile.coupons || [];
       if (result.profile.data?.addresses?.length) save(ADDRESS_KEY, result.profile.data.addresses);
       $("#orderName").value = result.profile.member.name || "";
@@ -409,6 +410,14 @@ async function initCartPage() {
     if (!validateCart()) return showSummary("購物車內有已售完商品，請先移除後再送出訂單。");
     const button = $("#submitOrder");
     button.disabled = true;
+    button.textContent = "正在確認庫存...";
+    try {
+      const validation = await apiRequest("validateCart", { items: cart.map((item) => ({ id: item.id, name: item.name, quantity: item.quantity })) });
+      if (!validation.valid) { showSummary(`送出前庫存檢查未通過：\n${validation.errors.join("\n")}`); button.disabled = false; button.textContent = "確認並送出訂單"; return; }
+      if (validation.warnings?.length && !confirm(`${validation.warnings.join("\n")}\n\n仍要送出並由客服重新報價嗎？`)) { button.disabled = false; button.textContent = "確認並送出訂單"; return; }
+    } catch (error) {
+      if (!/不支援的操作/.test(error.message)) { showSummary(`無法完成即時庫存檢查：${error.message}`); button.disabled = false; button.textContent = "確認並送出訂單"; return; }
+    }
     button.textContent = "訂單送出中...";
     const id = quoteId();
     const form = { name: $("#orderName").value.trim(), contact: $("#orderContact").value.trim(), payment: $("#paymentMethod").value, delivery: `${$("#deliveryMethod").value}／${$("#deliveryAddress").value.trim() || "未填地址"}`, outOfStockPreference: $("#outOfStockPreference").value, note: $("#orderNote").value.trim() };
