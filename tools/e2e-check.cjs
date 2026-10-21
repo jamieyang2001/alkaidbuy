@@ -17,6 +17,9 @@ const assert = require("node:assert/strict");
   assert.ok(await page.locator("#cartToast.show").isVisible(), "cart toast should appear");
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("yaoguang-cart-v1") || "[]").length), 1);
   await page.goto("http://127.0.0.1:8765/cart.html", { waitUntil: "networkidle" });
+  await page.selectOption("#siteLanguage", "zh-CN");
+  assert.match(await page.locator("h1").textContent(), /购物车与结账/, "Simplified Chinese should convert the full heading");
+  await page.selectOption("#siteLanguage", "zh-TW");
   page.once("dialog", (dialog) => dialog.accept());
   await page.locator("#clearCart").click();
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("yaoguang-cart-v1") || "[]").length), 0);
@@ -32,6 +35,18 @@ const assert = require("node:assert/strict");
   await page.getByRole("button", { name: "Create account" }).click();
   assert.ok(await page.locator("#memberRegisterForm").isVisible());
   assert.equal(errors.length, 0, `page errors: ${errors.join(" | ")}`);
+
+  await page.goto("http://127.0.0.1:8765/admin.html", { waitUntil: "networkidle" });
+  await page.evaluate(() => { document.querySelector("#adminApp").hidden = false; });
+  await page.locator('[data-tab="support"]').click();
+  assert.equal(await page.locator('[data-panel="support"]').isVisible(), true, "support panel should be visible");
+  assert.equal(await page.locator('[data-panel="operations"]').first().isVisible(), false, "operations panel should be hidden on support tab");
+  await page.locator('[data-tab="tools"]').click();
+  assert.equal(await page.locator('[data-panel="tools"]').first().isVisible(), true, "pricing tools panel should be visible");
+  assert.equal(await page.locator('[data-panel="tools"]').last().isVisible(), true, "backup tools panel should be visible");
+  await page.selectOption("#siteLanguage", "en");
+  assert.match(await page.locator('[data-tab="support"]').textContent(), /Support cases/, "admin tabs should translate");
+
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await mobile.goto("http://127.0.0.1:8765/index.html", { waitUntil: "networkidle" });
   for (const selector of [".site-header .brand", ".site-header .account-button", ".site-header .language-select", ".site-header .line-button"]) {
