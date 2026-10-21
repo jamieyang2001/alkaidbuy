@@ -233,6 +233,8 @@ body[data-request-type="特殊商品代購"] .reservation-field,
 body[data-request-type="網拍網購"] .reservation-field { display: none; }
 body[data-request-type="特殊商品代購"] .ticket-field,
 body[data-request-type="網拍網購"] .ticket-field { display: grid; }
+body[data-request-type="特殊商品代購"] .schedule-field,
+body[data-request-type="網拍網購"] .schedule-field { display: none; }
 label { display: grid; gap: 7px; color: var(--ink); font-weight: 900; }
 input, select, textarea { width: 100%; min-height: 44px; padding: 10px 12px; color: var(--ink); background: #fbfcfb; border: 1px solid var(--line); border-radius: 8px; outline: none; }
 textarea { resize: vertical; }
