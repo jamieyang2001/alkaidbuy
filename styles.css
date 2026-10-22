@@ -598,6 +598,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--green); box-shad
 .support-message p { margin: 5px 0 0; white-space: pre-wrap; }
 .support-message time { margin-top: 5px; opacity: .72; font-size: .76rem; }
 .support-reply-form { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; padding: 0 14px 14px; }
+.inquiry-chat { margin-top: 24px; }
 .report-list { display: grid; gap: 7px; }
 .report-list > p { display: flex; justify-content: space-between; gap: 14px; margin: 0; padding: 9px 0; border-bottom: 1px solid var(--line); }
 .report-list .quality-failure { color: #9a352f; }

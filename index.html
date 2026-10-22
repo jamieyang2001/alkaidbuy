@@ -138,6 +138,12 @@
           <button class="primary-button form-submit" type="submit">直接送出詢問</button>
           <p class="member-message full" id="specialSubmitStatus" role="status" aria-live="polite"></p>
         </form>
+        <section class="support-thread inquiry-chat" id="inquiryChat" hidden>
+          <div class="support-heading"><div><h3>與客服對話</h3><p id="inquiryChatLabel"></p></div><button class="secondary-button" id="refreshInquiryChat" type="button">更新對話</button></div>
+          <div class="support-messages" id="inquiryChatMessages"></div>
+          <form class="support-reply-form" id="inquiryReplyForm"><textarea id="inquiryReplyText" rows="3" placeholder="輸入要傳給客服的訊息" required></textarea><button class="primary-button" type="submit">傳送訊息</button></form>
+          <p class="member-message" id="inquiryReplyStatus" role="status"></p>
+        </section>
       </section>
 
       <section class="section shipping-section" id="shipping">

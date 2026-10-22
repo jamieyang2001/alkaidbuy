@@ -16,6 +16,24 @@ const assert = require("node:assert/strict");
   assert.equal(await page.locator("#peopleCount").inputValue(), "1", "reservation guest count should default to one");
   assert.match(await page.locator("#specialForm button[type=submit]").textContent(), /直接送出詢問/, "request form should submit directly");
   assert.ok(await page.locator(".desktop-quick-nav").isVisible(), "desktop quick navigation should be visible");
+  await page.route("https://script.google.com/**", async (route) => {
+    const payload = route.request().postDataJSON?.() || {};
+    const body = payload.action === "inquiryCreate"
+      ? { ok: true, inquiryId: "Q-TEST123", accessKey: "secret" }
+      : payload.action === "inquiryThread"
+        ? { ok: true, inquiry: { id: "Q-TEST123", status: "待回覆", messages: [{ sender: "客人", message: "測試詢問", createdAt: "2026/10/22" }] } }
+        : { ok: true };
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
+  });
+  await page.locator("#specialName").fill("測試客人");
+  await page.locator("#specialContact").fill("test@example.com");
+  await page.locator("#venueName").fill("測試店家");
+  await page.locator("#specialDate").fill("2026-12-20");
+  await page.locator("#specialTime").fill("18:00");
+  await page.locator("#specialBudget").fill("3000");
+  await page.locator("#specialForm button[type=submit]").click();
+  await page.waitForSelector("#inquiryChat:not([hidden])");
+  assert.match(await page.locator("#inquiryChatMessages").textContent(), /測試詢問/, "customer inquiry chat should render");
   await page.selectOption("#specialType", "代訂票");
   assert.equal(await page.locator("#specialTime").isVisible(), true, "ticket time should be visible");
   assert.equal(await page.locator("#specialTime").getAttribute("required"), "", "ticket time should be required");

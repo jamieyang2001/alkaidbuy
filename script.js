@@ -1073,6 +1073,7 @@ const cartClearedStorageKey = "yaoguang-cart-cleared-at";
 const adminAuthKey = "yaoguang-admin-auth";
 const adminTokenKey = "yaoguang-admin-token";
 const memberSessionKey = "yaoguang-member-session";
+const inquirySessionKey = "yaoguang-inquiry-session";
 const favoriteStorageKey = "yaoguang-favorites";
 const recentStorageKey = "yaoguang-recent";
 const productSnapshotKey = "yaoguang-product-snapshots";
@@ -1892,6 +1893,36 @@ function updateSpecialRequirements() {
 els.specialType.addEventListener("change", updateSpecialRequirements);
 updateSpecialRequirements();
 
+async function loadInquiryChat(showError = false) {
+  const session = load(inquirySessionKey, null);
+  if (!session?.inquiryId || !session?.accessKey) return;
+  try {
+    const result = await apiRequest("inquiryThread", session);
+    const inquiry = result.inquiry;
+    $("#inquiryChat").hidden = false;
+    $("#inquiryChatLabel").textContent = `${inquiry.id}・${inquiry.status}`;
+    $("#inquiryChatMessages").innerHTML = (inquiry.messages || []).map((message) => `<div class="support-message ${message.sender === "客服" ? "staff" : "customer"}"><strong>${escapeHtml(message.sender)}</strong><p>${escapeHtml(message.message)}</p><time>${escapeHtml(message.createdAt)}</time></div>`).join("") || "<p>尚無對話訊息。</p>";
+  } catch (error) {
+    if (showError) $("#inquiryReplyStatus").textContent = `無法更新對話：${error.message}`;
+  }
+}
+
+$("#refreshInquiryChat").addEventListener("click", () => loadInquiryChat(true));
+$("#inquiryReplyForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const session = load(inquirySessionKey, null), message = $("#inquiryReplyText").value.trim(), button = event.submitter;
+  if (!session || !message) return;
+  button.disabled = true;
+  try {
+    await apiRequest("inquiryThread", { ...session, message });
+    $("#inquiryReplyText").value = "";
+    $("#inquiryReplyStatus").textContent = "訊息已傳送給客服。";
+    await loadInquiryChat(true);
+  } catch (error) { $("#inquiryReplyStatus").textContent = `傳送失敗：${error.message}`; }
+  finally { button.disabled = false; }
+});
+loadInquiryChat();
+
 els.specialForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const button = event.submitter;
@@ -1906,11 +1937,13 @@ els.specialForm.addEventListener("submit", async (event) => {
       quantity: $("#itemQuantity").value, budget: $("#specialBudget").value, details: $("#specialDetails").value.trim(),
       memberToken: memberSession?.token || ""
     });
+    save(inquirySessionKey, { inquiryId: result.inquiryId, accessKey: result.accessKey });
     status.textContent = `詢問已直接送到客服後台，詢問編號：${result.inquiryId}`;
     els.specialForm.reset();
     els.specialType.value = "代訂位";
     $("#peopleCount").value = "1";
     updateSpecialRequirements();
+    await loadInquiryChat(true);
   } catch (error) {
     status.textContent = `送出失敗：${error.message}`;
   } finally { button.disabled = false; }
